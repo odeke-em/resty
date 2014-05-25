@@ -6,8 +6,14 @@ import sys
 import json
 from optparse import OptionParser
 
-from ___dbLiason import HandlerLiason
-from ___fileOnCloudHandler import FileOnCloudHandler
+try:
+    from ___dbLiason import HandlerLiason
+except ImportError as e:
+    from .___dbLiason import HandlerLiason
+try:
+    from ___fileOnCloudHandler import FileOnCloudHandler
+except ImportError as e:
+    from .___fileOnCloudHandler import FileOnCloudHandler
 
 isCallable = lambda a: hasattr(a, '__call__')
 getDefaultAuthor = lambda: os.environ.get('USER', 'Anonymous')
@@ -81,8 +87,8 @@ def cliParser():
 
 def main():
     args, options = cliParser()
-    restDriver = RestDriver(args.ip, args.port)
 
+    restDriver = RestDriver(args.ip, args.port)
     print(restDriver.newWorker(name='SpeedBuggy', purpose='Individual Checks'))
     print(restDriver.newJob(
         message='http://google.ca/someday', author=getDefaultAuthor(), assignedWorker_id=1
@@ -97,8 +103,8 @@ def main():
     ))
 
     print(restDriver.getCloudFilesManifest(select='size,checkSum'))
-    # print(restDriver.deleteJobs())
-    # print(restDriver.deleteWorkers())
+    print(restDriver.deleteJobs())
+    print(restDriver.deleteWorkers())
 
 if __name__ == '__main__':
     main()
