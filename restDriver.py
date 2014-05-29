@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # Author: Emmanuel Odeke <odeke@ualberta.ca>
+# Code to bootstrap any project that intends to use restAssured as the backend API
+# Will enable generation of related handlers
 
 import os
 import sys
@@ -33,31 +35,38 @@ def produceAndParse(func, **dataIn):
         return dbCheck
 
 class RestDriver:
+    __restConnectorMethods = {
+        'put': ('update', 's',), 'post': ('new', '',), 'delete': ('delete', 's'), 'get': ('get', 's',)
+    }
     def __init__(self, ip, port, checkSumAlgoName='sha1'):
         self.__checkSumAlgoName = checkSumAlgoName or 'sha1'
         self.__baseUrl = '{i}:{p}'.format(i=ip.strip('/'), p=port.strip('/'))
 
-        self.__jobLiason = self.__createLiason('/jobTable/jobHandler')
-        self.__workerLiason = self.__createLiason('/jobTable/workerHandler')
-
-        self.__externNameToLiasonMap = dict(
-            Job=self.__jobLiason, Worker=self.__workerLiason
-        )
+        self.__externNameToLiasonMap = dict()
 
         self.__fCloudHandler =  FileOnCloudHandler(self.__baseUrl, self.__checkSumAlgoName)
 
-        # Creating functions and table handlers
-        self.newJob = self.__createLiasableFunc('Job', 'postConn')
-        self.newWorker = self.__createLiasableFunc('Worker', 'postConn')
+    def registerLiason(self, shortName, url):
+        # Params: shortName eg 'Job'
+        #         url eg '/jobTable/jobHandler'
+        # Explanation: + Creates a name mangled dbLiason, and then creates the respective rest handlers as
+        #                defined in static dict '__restConnectorMethods' and creates their '*Conn' connectors
+        #              + Eg self.updateWorkers, self.deleteWorkers, self.getWorkers, etc that you will invoke
+        #                externally.
+        # Returns the created handler
 
-        self.getJobs = self.__createLiasableFunc('Job', 'getConn')
-        self.getWorkers= self.__createLiasableFunc('Worker', 'getConn')
+        liasonName = '__%sLiason'%(shortName.lower())
+        setattr(self, liasonName, self.__createLiason(url))
+        self.__externNameToLiasonMap[shortName] = getattr(self, liasonName)
 
-        self.updateJobs = self.__createLiasableFunc('Job', 'putConn')
-        self.updateWorkers = self.__createLiasableFunc('Worker', 'putConn')
+        for restMethod, symNameTuple in self.__restConnectorMethods.items():
+            symName, nameSuffix = symNameTuple
+            setattr(
+                self, '%s%s%s'%(symName, shortName, nameSuffix),
+                self.__createLiasableFunc(shortName, '%sConn'%(restMethod))
+            )
 
-        self.deleteJobs = self.__createLiasableFunc('Job', 'deleteConn')
-        self.deleteWorkers = self.__createLiasableFunc('Worker', 'deleteConn')
+        return getattr(self, liasonName)
 
     def __createLiason(self, url):
         return HandlerLiason(self.__baseUrl + url)
@@ -73,7 +82,7 @@ class RestDriver:
         return self.__fCloudHandler.uploadFileByPath(srcPath, **attrs)
 
     def downloadFile(self, key, **attrs):
-        return self.__fCloudHandler.downloadFileToDisk('documents/' + key)
+        return self.__fCloudHandler.downloadFileToDisk('documents/'+key, **attrs)
 
     def deleteFile(self, **attrs):
         return self.__fCloudHandler.deleteFileOnCloud(**attrs)
@@ -83,6 +92,12 @@ class RestDriver:
 
     def getCloudFilesManifest(self, **queryParams):
         return self.__fCloudHandler.getParsedManifest(queryParams)
+
+    def setBaseUrl(self, newUrl):
+        self.__baseUrl = newUrl
+
+    def getBaseUrl(self):
+        return self.__baseUrl
 
 def cliParser():
     parser = OptionParser()
@@ -95,9 +110,13 @@ def main():
     args, options = cliParser()
 
     restDriver = RestDriver(args.ip, args.port)
+
+    restDriver.registerLiason('Job', '/jobTable/jobHandler')
+    restDriver.registerLiason('Worker', '/jobTable/workerHandler')
+
     print(restDriver.newWorker(name='SpeedBuggy', purpose='Individual Checks'))
     print(restDriver.newJob(
-        message='http://google.ca/someday', author=getDefaultAuthor(), assignedWorker_id=1
+        message='TheStrokes-Someday', author=getDefaultAuthor(), assignedWorker_id=1
     ))
 
     print(restDriver.updateWorkers(
@@ -111,6 +130,9 @@ def main():
     print(restDriver.getCloudFilesManifest(select='size,checkSum'))
     print(restDriver.deleteJobs())
     print(restDriver.deleteWorkers())
+
+    restDriver.registerLiason('Artist', '/thebear/artistHandler')
+    print(restDriver.newArtist(name='Tester'))
 
 if __name__ == '__main__':
     main()
