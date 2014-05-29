@@ -4,6 +4,7 @@
 import os
 import sys
 import json
+import collections
 from optparse import OptionParser
 
 try:
@@ -35,13 +36,15 @@ class RestDriver:
     def __init__(self, ip, port, checkSumAlgoName='sha1'):
         self.__checkSumAlgoName = checkSumAlgoName or 'sha1'
         self.__baseUrl = '{i}:{p}'.format(i=ip.strip('/'), p=port.strip('/'))
-        self.__jobLiason = HandlerLiason(self.__baseUrl + '/jobTable/jobHandler')
-        self.__workerLiason = HandlerLiason(self.__baseUrl + '/jobTable/workerHandler')
-        self.__externNameToLiasonMap = dict(Job=self.__jobLiason, Worker=self.__workerLiason)
 
-        self.__fCloudHandler =  FileOnCloudHandler(
-            self.__baseUrl, self.__checkSumAlgoName
+        self.__jobLiason = self.__createLiason('/jobTable/jobHandler')
+        self.__workerLiason = self.__createLiason('/jobTable/workerHandler')
+
+        self.__externNameToLiasonMap = dict(
+            Job=self.__jobLiason, Worker=self.__workerLiason
         )
+
+        self.__fCloudHandler =  FileOnCloudHandler(self.__baseUrl, self.__checkSumAlgoName)
 
         # Creating functions and table handlers
         self.newJob = self.__createLiasableFunc('Job', 'postConn')
@@ -55,6 +58,9 @@ class RestDriver:
 
         self.deleteJobs = self.__createLiasableFunc('Job', 'deleteConn')
         self.deleteWorkers = self.__createLiasableFunc('Worker', 'deleteConn')
+
+    def __createLiason(self, url):
+        return HandlerLiason(self.__baseUrl + url)
 
     def __createLiasableFunc(self, key, methodKey, **attrs):
         liason = self.__externNameToLiasonMap.get(key, None)
