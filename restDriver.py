@@ -99,6 +99,9 @@ class RestDriver:
     def getBaseUrl(self):
         return self.__baseUrl
 
+    def jsonParseResponse(self, reqResponse):
+        return self.__fCloudHandler.jsonParseResponse(reqResponse)
+
 def cliParser():
     parser = OptionParser()
     parser.add_option('-i', '--ip', default='http://127.0.0.1', help='Port server is on', dest='ip')
