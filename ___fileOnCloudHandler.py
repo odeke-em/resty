@@ -54,7 +54,7 @@ class FileOnCloudHandler:
        
             return response
 
-    def uploadFileByStream(self, stream, **attrs):
+    def uploadFileByStream(self, f, **attrs):
         return self.__pushUpFileByStream(isPut=False, stream=f, **attrs)
 
     def uploadFileByPath(self, fPath, **attrs):
