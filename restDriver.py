@@ -23,16 +23,19 @@ getDefaultAuthor = lambda: os.environ.get('USER', 'Anonymous')
 
 def produceAndParse(func, **dataIn):
     dbCheck = func(**dataIn)
-    if  hasattr(dbCheck, 'get') and isCallable(dbCheck.get):
-        response = dbCheck.get('value', None)
-        try:
-            outValue = json.loads(response.decode())
-            outValue['status_code'] = dbCheck.get('status_code', 200)
-            return outValue
-        except Exception as e:
-            return dict(reason=str(e), status_code=500)
-    else:
+    if  not (hasattr(dbCheck, 'get') and isCallable(dbCheck.get)):
         return dbCheck
+    else:
+        response = dbCheck.get('value', None)
+        if not (hasattr(response, 'decode') and isCallable(response.decode)):
+            return {'reason': 'No response could be decoded', 'status_code': 400}
+        else:
+            try:
+                outValue = json.loads(response.decode())
+                outValue['status_code'] = dbCheck.get('status_code', 200)
+                return outValue
+            except Exception as e:
+                return {'reason': str(e), 'status_code': 500}
 
 class RestDriver:
     __restConnectorMethods = {
@@ -108,34 +111,3 @@ def cliParser():
     parser.add_option('-p', '--port', default='8000', help='IP address db connects to', dest='port')
 
     return parser.parse_args()
-
-def main():
-    args, options = cliParser()
-
-    restDriver = RestDriver(args.ip, args.port)
-
-    restDriver.registerLiason('Job', '/jobTable/jobHandler')
-    restDriver.registerLiason('Worker', '/jobTable/workerHandler')
-
-    print(restDriver.newWorker(name='SpeedBuggy', purpose='Individual Checks'))
-    print(restDriver.newJob(
-        message='TheStrokes-Someday', author=getDefaultAuthor(), assignedWorker_id=1
-    ))
-
-    print(restDriver.updateWorkers(
-        queryParams=dict(name='SpeedBuggy'), updatesBody=dict(purpose='Crawling Speed checks')
-    ))
-
-    print('Updating', restDriver.updateJobs(
-        queryParams=dict(message='TheStrokes-Someday'), updatesBody=dict(status='finished')
-    ))
-
-    print(restDriver.getCloudFilesManifest(select='size,checkSum'))
-    print(restDriver.deleteJobs())
-    print(restDriver.deleteWorkers())
-
-    restDriver.registerLiason('Artist', '/thebear/artistHandler')
-    print(restDriver.newArtist(name='Tester'))
-
-if __name__ == '__main__':
-    main()
