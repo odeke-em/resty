@@ -46,6 +46,12 @@ class DbConn:
 
         return dataOut
 
+    def setBaseURL(self, baseURL):
+        self.baseUrl = baseURL
+
+    def getBaseURL(self):
+        return self.baseUrl
+
     def get(self, **data):
         return self.__urlRequest('get', isGet=True, **data)
 

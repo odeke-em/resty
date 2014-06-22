@@ -18,11 +18,16 @@ isRegPath = lambda p: not os.path.isdir(p)
 
 class FileOnCloudHandler:
     def __init__(self, url, checkSumAlgoName='md5'):
+        self.setBaseURL(url)
+        self.__checkSumAlgoName = checkSumAlgoName
+
+    def setBaseURL(self, url):
         self.__baseUrl = url.strip('/')
         self.__upUrl = self.__baseUrl + '/uploader'
         self.__mediaUrl = self.__baseUrl + '/media/'
 
-        self.__checkSumAlgoName = checkSumAlgoName
+    def getBaseURL(self):
+        return self.__baseUrl
 
     def initCheckSumAlgoName(self, algoName):
         self.__checkSumAlgoName = algoName

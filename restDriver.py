@@ -99,6 +99,9 @@ class RestDriver:
     def setBaseUrl(self, newUrl):
         self.__baseUrl = newUrl
 
+        # Propagate the changes along to the fileCloudHandler
+        self.__fCloudHandler.setBaseURL(self.__baseUrl)
+
     def getBaseUrl(self):
         return self.__baseUrl
 
