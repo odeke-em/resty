@@ -10,7 +10,7 @@ import hashlib
 try:
     import requests
 except ImportError:
-    sys.stderr.write("\033[91mFirst install 'requests'\033[00m")
+    sys.stderr.write("\033[91mFirst install 'requests'\033[00m\n")
     sys.exit(-1)
 
 getDefaultUserName = lambda: os.environ.get('USER', 'Anonymous')
