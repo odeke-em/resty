@@ -3,6 +3,7 @@
 # Utility to enable file management on the cloud using restAssured
 
 import os
+import io
 import sys
 import json
 import hashlib
@@ -47,7 +48,7 @@ class FileOnCloudHandler:
                 attrs['checkSum'] = checkSum
                 attrs['checkSumAlgoName'] = self.__checkSumAlgoName
  
-        method = requests.put if  isPut else requests.post
+        method = requests.put if isPut else requests.post
         return method(self.__upUrl, data=attrs, files={'blob': stream})
 
     def __pushUpFileByPath(self, methodToggle, fPath, **attrs):
@@ -60,13 +61,13 @@ class FileOnCloudHandler:
             return response
 
     def uploadFileByStream(self, f, **attrs):
-        return self.__pushUpFileByStream(isPut=False, stream=f, **attrs)
+        return self.__pushUpFileByStream(stream=f, **attrs)
 
     def uploadFileByPath(self, fPath, **attrs):
         return self.__pushUpFileByPath(False, fPath, **attrs)
 
     def updateFileByStream(self, f, **attrs):
-        return self.uploadFileByStream(isPut=True, stream=f, **attrs)
+        return self.uploadFileByStream(isPut=True, f=f, **attrs)
 
     def updateFileByPath(self, fPath, **attrs):
         return self.__pushUpFileByPath(True, fPath, **attrs)
@@ -93,6 +94,18 @@ class FileOnCloudHandler:
                         f.flush()
 
         return writtenBytes
+
+    def downloadFileToBuffer(self, pathOnCloudName, chunkSize=1024):
+        chunkIterator = self.downloadFileToStream(pathOnCloudName, chunkSize)
+        if hasattr(chunkIterator, '__next__'):
+            ioBuf = io.BytesIO()
+            for chunk in chunkIterator:
+                if chunk:
+                    ioBuf.write(chunk)
+
+            # Rewind it
+            ioBuf.seek(0)
+            return ioBuf
 
     def deleteFileOnCloud(self, **attrsDict):
         return requests.delete(self.__upUrl, params=attrsDict)

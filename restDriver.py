@@ -49,6 +49,9 @@ class RestDriver:
 
         self.__fCloudHandler =  FileOnCloudHandler(self.__baseUrl, self.__checkSumAlgoName)
 
+    def getCheckSumAlgoName(self):
+        return self.__fCloudHandler.getCheckSumAlgoName()
+
     def registerLiason(self, shortName, url):
         # Params: shortName eg 'Job'
         #         url eg '/jobTable/jobHandler'
@@ -84,14 +87,25 @@ class RestDriver:
     def uploadFile(self, srcPath, **attrs):
         return self.__fCloudHandler.uploadFileByPath(srcPath, **attrs)
 
+    def uploadStream(self, f, **attrs):
+        attrs['isPut'] = False
+        return self.__fCloudHandler.uploadFileByStream(f, **attrs)
+
     def downloadFile(self, key, **attrs):
         return self.__fCloudHandler.downloadFileToDisk('documents/'+key, **attrs)
+
+    def downloadFileToStream(self, key, chunkSize=1024):
+        return self.__fCloudHandler.downloadFileToBuffer('documents/'+key, chunkSize)
 
     def deleteFile(self, **attrs):
         return self.__fCloudHandler.deleteFileOnCloud(**attrs)
 
     def updateFile(self, key, **attrs):
+        attrs['isPut'] = True
         return self.__fCloudHandler.updateFileByPath(key, **attrs)
+
+    def updateStream(self, stream, **attrs):
+        return self.__fCloudHandler.updateFileByStream(stream, **attrs)
 
     def getCloudFilesManifest(self, **queryParams):
         return self.__fCloudHandler.getParsedManifest(queryParams)
