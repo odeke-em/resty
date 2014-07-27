@@ -95,7 +95,7 @@ class FileOnCloudHandler:
         return writtenBytes
 
     def deleteFileOnCloud(self, **attrsDict):
-        return requests.delete(self.__upUrl, **attrsDict)
+        return requests.delete(self.__upUrl, params=attrsDict)
 
     def getManifest(self, queryDict={}):
         return requests.get(self.__upUrl, params=queryDict)
@@ -143,7 +143,7 @@ def main():
         '''
 
         print(fH.getManifest(dict(select='id')).text)
-        # print(fH.deleteFileOnCloud().text)
+        print(fH.deleteFileOnCloud().text)
 
 if __name__ == '__main__':
     main()
