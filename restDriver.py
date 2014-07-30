@@ -84,18 +84,18 @@ class RestDriver:
             method = lambda **aux: aux
         return method
 
-    def uploadFile(self, srcPath, **attrs):
-        return self.__fCloudHandler.uploadFileByPath(srcPath, **attrs)
+    def uploadBlob(self, srcPath, **attrs):
+        return self.__fCloudHandler.uploadBlobByPath(srcPath, **attrs)
 
     def uploadStream(self, f, **attrs):
         attrs['isPut'] = False
-        return self.__fCloudHandler.uploadFileByStream(f, **attrs)
+        return self.__fCloudHandler.uploadBlobByStream(f, **attrs)
 
-    def downloadFile(self, key, **attrs):
-        return self.__fCloudHandler.downloadFileToDisk('documents/'+key, **attrs)
+    def downloadBlob(self, key, **attrs):
+        return self.__fCloudHandler.downloadBlobToDisk('documents/'+key, **attrs)
 
-    def downloadFileToStream(self, key, chunkSize=1024):
-        return self.__fCloudHandler.downloadFileToBuffer('documents/'+key, chunkSize)
+    def downloadBlobToStream(self, key, chunkSize=1024):
+        return self.__fCloudHandler.downloadBlobToBuffer('documents/'+key, chunkSize)
 
     def deleteFile(self, **attrs):
         return self.__fCloudHandler.deleteFileOnCloud(**attrs)

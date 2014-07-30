@@ -60,14 +60,14 @@ class FileOnCloudHandler:
        
             return response
 
-    def uploadFileByStream(self, f, **attrs):
+    def uploadBlobByStream(self, f, **attrs):
         return self.__pushUpFileByStream(stream=f, **attrs)
 
-    def uploadFileByPath(self, fPath, **attrs):
+    def uploadBlobByPath(self, fPath, **attrs):
         return self.__pushUpFileByPath(False, fPath, **attrs)
 
     def updateFileByStream(self, f, **attrs):
-        return self.uploadFileByStream(isPut=True, f=f, **attrs)
+        return self.uploadBlobByStream(isPut=True, f=f, **attrs)
 
     def updateFileByPath(self, fPath, **attrs):
         return self.__pushUpFileByPath(True, fPath, **attrs)
@@ -76,14 +76,14 @@ class FileOnCloudHandler:
     def __pathForMediaDownload(self, fPath):
         return self.__mediaUrl + fPath
 
-    def downloadFileToStream(self, fPath, readChunkSize=512):
+    def downloadBlobToStream(self, fPath, readChunkSize=512):
         formedUrl = self.__pathForMediaDownload(fPath)
         dataIn = requests.get(formedUrl, stream=True)
         if dataIn.status_code == 200:
             return dataIn.iter_content(chunk_size=readChunkSize)
 
-    def downloadFileToDisk(self, pathOnCloudName, altName=None, chunkSize=1024):
-        chunkIterator = self.downloadFileToStream(pathOnCloudName, chunkSize)
+    def downloadBlobToDisk(self, pathOnCloudName, altName=None, chunkSize=1024):
+        chunkIterator = self.downloadBlobToStream(pathOnCloudName, chunkSize)
         writtenBytes = 0
         if hasattr(chunkIterator, '__next__'):
             localName = altName or os.path.basename(pathOnCloudName)
@@ -95,8 +95,8 @@ class FileOnCloudHandler:
 
         return writtenBytes
 
-    def downloadFileToBuffer(self, pathOnCloudName, chunkSize=1024):
-        chunkIterator = self.downloadFileToStream(pathOnCloudName, chunkSize)
+    def downloadBlobToBuffer(self, pathOnCloudName, chunkSize=1024):
+        chunkIterator = self.downloadBlobToStream(pathOnCloudName, chunkSize)
         if hasattr(chunkIterator, '__next__'):
             ioBuf = io.BytesIO()
             for chunk in chunkIterator:
@@ -133,7 +133,7 @@ def main():
         sys.stderr.write('%s \033[42m<paths>\n\033[00m'%(__file__))
     else:
         fH = FileOnCloudHandler('http://127.0.0.1:8000', 'sha1')
-        uploadFunc = lambda p: fH.uploadFileByPath(p, author=getDefaultUserName(), title=p)
+        uploadFunc = lambda p: fH.uploadBlobByPath(p, author=getDefaultUserName(), title=p)
         for p in sys.argv[1:]:
             if not os.path.exists(p):
                 print('Non existant path', p)
@@ -147,12 +147,12 @@ def main():
                 print(uploadFunc(p))
         '''
         srcPath = '/Users/emmanuelodeke/Desktop/bbndk.png'
-        uResponse =fH.uploadFileByPath(srcPath, author=getDefaultUserName(), title=srcPath)
+        uResponse =fH.uploadBlobByPath(srcPath, author=getDefaultUserName(), title=srcPath)
         # print(uResponse)
         print(uResponse.text)
   
         shortPath = os.path.basename(srcPath) 
-        print(fH.downloadFileToDisk('documents/' + shortPath))
+        print(fH.downloadBlobToDisk('documents/' + shortPath))
         '''
 
         print(fH.getManifest(dict(select='id')).text)

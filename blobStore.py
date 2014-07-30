@@ -41,7 +41,7 @@ def main():
             metaData='First 40 triangulatr number@:%f'%(time.time())
         ))
 
-    dlStream = rD.downloadFileToStream('blob')
+    dlStream = rD.downloadBlobToStream('blob')
 
     # Reverted
     if dlStream:

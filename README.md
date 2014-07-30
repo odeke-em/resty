@@ -113,7 +113,7 @@ Sample Usage:
                     metaData='First 40 triangular numbers@:%f'%(time.time())
                 ))
 
-            dlStream = rDriver.downloadFileToStream('blob')
+            dlStream = rDriver.downloadBlobToStream('blob')
 
             # DeSerializing
             if dlStream:
