@@ -52,7 +52,7 @@ def main():
         assert(reloaded == triangs)
 
     # Clean up after yourself
-    print('Now cleaning up',  rD.deleteFile(checkSum=checkSum))
+    print('Now cleaning up',  rD.deleteBlob(checkSum=checkSum))
 
 if __name__ == '__main__':
     main()

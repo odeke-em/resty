@@ -61,7 +61,7 @@ Sample Usage:
             print(restDriver.getCloudFilesManifest(select='size,checkSum'))
 
             # Handling D for file handling app
-            print(restDriver.deleteFile(title='collabFib'))
+            print(restDriver.deleteBlob(title='collabFib'))
 
             restDriver.registerLiason('Artist', '/thebear/artistHandler')
             print(restDriver.newArtist(name='Tester'))
@@ -124,7 +124,7 @@ Sample Usage:
                 assert(reloaded == triangs)
 
             # Clean up after yourself
-            print('Now cleaning up',  rDriver.deleteFile(checkSum=checkSum))
+            print('Now cleaning up',  rDriver.deleteBlob(checkSum=checkSum))
 
         if __name__ == '__main__':
             main()

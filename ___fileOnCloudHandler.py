@@ -107,7 +107,7 @@ class FileOnCloudHandler:
             ioBuf.seek(0)
             return ioBuf
 
-    def deleteFileOnCloud(self, **attrsDict):
+    def deleteBlobOnCloud(self, **attrsDict):
         return requests.delete(self.__upUrl, params=attrsDict)
 
     def getManifest(self, queryDict={}):
@@ -156,7 +156,7 @@ def main():
         '''
 
         print(fH.getManifest(dict(select='id')).text)
-        print(fH.deleteFileOnCloud().text)
+        print(fH.deleteBlobOnCloud().text)
 
 if __name__ == '__main__':
     main()

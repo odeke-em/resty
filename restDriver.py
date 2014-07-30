@@ -97,8 +97,8 @@ class RestDriver:
     def downloadBlobToStream(self, key, chunkSize=1024):
         return self.__fCloudHandler.downloadBlobToBuffer('documents/'+key, chunkSize)
 
-    def deleteFile(self, **attrs):
-        return self.__fCloudHandler.deleteFileOnCloud(**attrs)
+    def deleteBlob(self, **attrs):
+        return self.__fCloudHandler.deleteBlobOnCloud(**attrs)
 
     def updateFile(self, key, **attrs):
         attrs['isPut'] = True
