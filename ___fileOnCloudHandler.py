@@ -49,11 +49,11 @@ class FileOnCloudHandler:
                 attrs['checkSumAlgoName'] = self.__checkSumAlgoName
  
         method = requests.put if isPut else requests.post
-        return method(self.__upUrl, data=attrs, files={'blob': stream})
+        return self.___opHandler(method, self.__upUrl, data=attrs, files={'blob': stream})
 
     def __pushUpFileByPath(self, methodToggle, fPath, **attrs):
         response = None
-        if fPath and os.path.exists(fPath):
+        if fPath and os.path.exists(fPath) and os.access(fPath, os.R_OK):
             checkSumInfo = None
             with open(fPath, 'rb') as f:
                 response = self.__pushUpFileByStream(methodToggle, f, **attrs)
@@ -78,9 +78,13 @@ class FileOnCloudHandler:
 
     def downloadBlobToStream(self, fPath, readChunkSize=512):
         formedUrl = self.__pathForMediaDownload(fPath)
-        dataIn = requests.get(formedUrl, stream=True)
-        if dataIn.status_code == 200:
-            return dataIn.iter_content(chunk_size=readChunkSize)
+        try:
+            dataIn = requests.get(formedUrl, stream=True)
+        except Exception as e:
+            print(e)
+        else:
+            if dataIn.status_code == 200:
+                return dataIn.iter_content(chunk_size=readChunkSize)
 
     def downloadBlobToDisk(self, pathOnCloudName, altName=None, chunkSize=1024):
         chunkIterator = self.downloadBlobToStream(pathOnCloudName, chunkSize)
@@ -108,15 +112,27 @@ class FileOnCloudHandler:
             return ioBuf
 
     def deleteBlobOnCloud(self, **attrsDict):
-        return requests.delete(self.__upUrl, params=attrsDict)
+        return self.___opHandler(request.delete, self.__upUrl, params=attrsDict)
+
+    def ___opHandler(self, func, *args, **kwargs):
+        res = None
+        try:
+            res = func(*args, **kwargs)
+        except Exception as e:
+            res = e
+
+        return res
 
     def getManifest(self, queryDict={}):
-        return requests.get(self.__upUrl, params=queryDict)
+        return self.___opHandler(requests.get, self.__upUrl, params=queryDict)
 
     def getParsedManifest(self, queryDict):
         return self.jsonParseResponse(self.getManifest(queryDict))
 
     def jsonParseResponse(self, reqResponse):
+        if isinstance(reqResponse, Exception):
+            return {'status_code': 500, 'reason': reqResponse}
+
         jsonParsed = dict()
         try:
             jsonParsed['data'] = json.loads(reqResponse.text).get('data', [])
