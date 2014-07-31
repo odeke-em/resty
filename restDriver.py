@@ -4,6 +4,7 @@
 # Will enable generation of related handlers
 
 import os
+import re
 import sys
 import json
 import collections
@@ -20,6 +21,8 @@ except ImportError as e:
 
 isCallable = lambda a: hasattr(a, '__call__')
 getDefaultAuthor = lambda: os.environ.get('USER', 'Anonymous')
+
+docStartRegCompile = re.compile('^documents', re.UNICODE)
 
 def produceAndParse(func, **dataIn):
     dbCheck = func(**dataIn)
@@ -91,11 +94,15 @@ class RestDriver:
         attrs['isPut'] = False
         return self.__fCloudHandler.uploadBlobByStream(f, **attrs)
 
+    def ___keyToDocCloudName(self, key):
+        return key if docStartRegCompile.search(key) else 'documents/'+key
+
     def downloadBlob(self, key, **attrs):
-        return self.__fCloudHandler.downloadBlobToDisk('documents/'+key, **attrs)
+        print('rege', docStartRegCompile.search(key)) 
+        return self.__fCloudHandler.downloadBlobToDisk(self.___keyToDocCloudName(key), **attrs)
 
     def downloadBlobToStream(self, key, chunkSize=1024):
-        return self.__fCloudHandler.downloadBlobToBuffer('documents/'+key, chunkSize)
+        return self.__fCloudHandler.downloadBlobToBuffer(self.___keyToDocCloudName(key), chunkSize)
 
     def deleteBlob(self, **attrs):
         return self.__fCloudHandler.deleteBlobOnCloud(**attrs)

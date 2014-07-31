@@ -78,53 +78,36 @@ Sample Usage:
 
         #!/usr/bin/env python3
 
-        import io
-        import time
-        import pickle
-        import hashlib
+        def testSerializer():
+            import Serializer
+            bs = Serializer.BinarySerializer()
+            js = Serializer.JSONSerializer()
+            data = dict((i, i) for i in range(100))
+            bserial = bs.serialize(data)
+            jserial = js.serialize(data)
 
-        import restDriver
+            bdserial = bs.deserialize(bserial)
+            jdserial = js.deserialize(jserial)
+            print('bdserial', bdserial)
+            ioS = bs.ioStream(bserial)
+            print('ioS', ioS.read())
 
-        triang = lambda i: (i * (i + 1))//2
+        def testCloudPassage():
+            import ___cloudPassage
+            cc = ___cloudPassage.CloudPassageHandler()
+            data = dict((i, i*10) for i in range(9000))
+            res = cc.push(data, title='Dict of items 0-8999, keys i*10') 
+            pulledObj = cc.pull(metaData='pickle')
+
+            assert(pulledObj == data)
+            print(pulledObj)
+
+            rmTry = cc.removeTrace(data)
+            print(rmTry)
 
         def main():
-            rDriver = restDriver.RestDriver('http://127.0.0.1', '8000')
-            triangs = [triang(i) for i in range(40)]
-
-            checkSumFunc = getattr(hashlib, rDriver.getCheckSumAlgoName(), None)
-            assert(checkSumFunc)
-    
-            ioObj = io.BytesIO(pickle.dumps(triangs))
-            checkSum = checkSumFunc(ioObj.read()).hexdigest()
-
-            # Rewind
-            ioObj.seek(0)
-
-            queryAttrs = dict(checkSum=checkSum, checkSumAlgoName=rDriver.getCheckSumAlgoName())
-            manifest = rDriver.getCloudFilesManifest(**queryAttrs)
-            retr = manifest.get('data', None)
-
-            if manifest['status_code'] == 200 and retr:
-                print('Previously stored', retr)
-                print('Now updating the streams', rDriver.updateStream(ioObj, checkSum=checkSum))
-            else:
-                print('Freshly uploaded', rDriver.uploadStream(
-                    ioObj, author='Emmanuel Odeke',
-                    metaData='First 40 triangular numbers@:%f'%(time.time())
-                ))
-
-            dlStream = rDriver.downloadBlobToStream('blob')
-
-            # DeSerializing
-            if dlStream:
-                reloaded = pickle.loads(dlStream.read())
-                print('Reloaded as an object\033[47m {} of len: {}\033[00m'.format(
-                    reloaded, len(reloaded))
-                )
-                assert(reloaded == triangs)
-
-            # Clean up after yourself
-            print('Now cleaning up',  rDriver.deleteBlob(checkSum=checkSum))
+            testSerializer()
+            testCloudPassage()
 
         if __name__ == '__main__':
             main()

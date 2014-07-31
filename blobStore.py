@@ -6,53 +6,38 @@
 # Sample usage might be in collaborative computing ie publish results from an expensive
 # computation on one machine so that other machines can load it as live data.
 
-import io
-import time
-import pickle
-import hashlib
+def testSerializer():
+    import Serializer
+    bs = Serializer.BinarySerializer()
+    js = Serializer.JSONSerializer()
+    data = dict((i, i) for i in range(10))
+    bserial = bs.serialize(data)
+    jserial = js.serialize(data)
 
-import restDriver
+    bdserial = bs.deserialize(bserial)
+    jdserial = js.deserialize(jserial)
+    print('bdserial', bdserial)
 
-triang = lambda i: (i * (i + 1))//2
+    ioS = bs.ioStream(bserial)
+    ioR = ioS.read()
+    print('ioS data from the stream', ioR)
+
+def testCloudPassage():
+    import ___cloudPassage
+    cc = ___cloudPassage.CloudPassageHandler()
+    data = dict((i, i*10) for i in range(9000))
+    res = cc.push(data, title='Dict of items 0-8999, keys i*10') 
+    pulledObj = cc.pull(metaData='pickle')
+
+    assert(pulledObj == data)
+    print(pulledObj)
+
+    rmTry = cc.removeTrace(data)
+    print(rmTry)
 
 def main():
-    rD = restDriver.RestDriver('http://127.0.0.1', '8000')
-    triangs = [triang(i) for i in range(40)]
-
-    checkSumFunc = getattr(hashlib, rD.getCheckSumAlgoName(), None)
-    assert(checkSumFunc)
-    
-    ioObj = io.BytesIO(pickle.dumps(triangs))
-    checkSum = checkSumFunc(ioObj.read()).hexdigest()
-
-    # Rewind
-    ioObj.seek(0)
-
-    queryAttrs = dict(checkSum=checkSum, checkSumAlgoName=rD.getCheckSumAlgoName())
-    manifest = rD.getCloudFilesManifest(**queryAttrs)
-    retr = manifest.get('data', None)
-
-    if manifest['status_code'] == 200 and retr:
-        print('Previously stored', retr)
-        func = rD.updateStream(ioObj, checkSum=checkSum)
-    else:
-        print('Freshly uploaded', rD.uploadStream(
-            ioObj, author='Emmanuel Odeke',
-            metaData='First 40 triangulatr number@:%f'%(time.time())
-        ))
-
-    dlStream = rD.downloadBlobToStream('blob')
-
-    # Reverted
-    if dlStream:
-        reloaded = pickle.loads(dlStream.read())
-        print('Reloaded as an object\033[47m {} of len: {}\033[00m'.format(
-            reloaded, len(reloaded))
-        )
-        assert(reloaded == triangs)
-
-    # Clean up after yourself
-    print('Now cleaning up',  rD.deleteBlob(checkSum=checkSum))
+    testSerializer()
+    testCloudPassage()
 
 if __name__ == '__main__':
     main()
