@@ -112,7 +112,7 @@ class FileOnCloudHandler:
             return ioBuf
 
     def deleteBlobOnCloud(self, **attrsDict):
-        return self.___opHandler(request.delete, self.__upUrl, params=attrsDict)
+        return self.___opHandler(requests.delete, self.__upUrl, params=attrsDict)
 
     def ___opHandler(self, func, *args, **kwargs):
         res = None
