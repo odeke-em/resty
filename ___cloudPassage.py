@@ -20,33 +20,33 @@ class CloudPassageHandler:
     def getCheckSumFunc(self):
         return getattr(hashlib, self.__restDriver.getCheckSumAlgoName(), None)
 
-    def computeCheckSum(self, data):
-        return self.__checkSumFunc(data).hexdigest()
+    def computeCheckSum(self, selector, data):
+        return self.__checkSumFunc(selector.preHasher(selector.serialize(data))).hexdigest()
 
-    def __selectSerializer(self, jsonToggle):
-        if jsonToggle:
-            return self.__jsonSerializer, 'json'
+    def __selectSerializer(self, asPickle):
+        if asPickle:
+            return self.__pickleSerializer, 'pickle'
 
-        return self.__pickleSerializer, 'pickle'
+        return self.__jsonSerializer, 'json'
 
     def push(self, rawObject, asPickle=False, **kwargs):
         selector, sType = self.__selectSerializer(asPickle)
 
-        checkSum = self.computeCheckSum(selector.serialize(rawObject))
-
         # We maintain uniqueness
+        checkSum = self.computeCheckSum(selector, rawObject)
+
         status, retr = self.__manifestPull(checkSum=checkSum, metaData=sType, **kwargs)
         stream = selector.ioStream(rawObject)
         kwargs.setdefault('uri', 'Computation@%s'%(time.time()))
-
+        func = self.__restDriver.uploadStream
         if status == 200 and retr:
-            return self.__restDriver.updateStream(stream, checkSum=checkSum, metaData=sType, **kwargs)
-        else:
-            return self.__restDriver.uploadStream(stream, checkSum=checkSum, metaData=sType, **kwargs)
+            func = self.__restDriver.updateStream
+
+        return func(stream, checkSum=checkSum, metaData=sType, **kwargs)
 
     def removeTrace(self, rawObj, asPickle=False, **kwargs):
         selector, sType = self.__selectSerializer(asPickle)
-        checkSum = self.computeCheckSum(selector.serialize(rawObj))
+        checkSum = self.computeCheckSum(selector, rawObj)
 
         return self.__restDriver.deleteBlob(checkSum=checkSum, metaData=sType)
 
@@ -58,7 +58,7 @@ class CloudPassageHandler:
             if keyName:
                 stream = self.__restDriver.downloadBlobToStream(keyName)
                 if stream and Serializer.isCallable(stream.read):
-                    metaType = queryMap.get('metaData', None)
+                    metaType = data.get('metaData', None)
 
                     selector = None
                     if metaType == 'json': 

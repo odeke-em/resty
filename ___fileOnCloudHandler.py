@@ -37,16 +37,18 @@ class FileOnCloudHandler:
         return self.__checkSumAlgoName
 
     def __pushUpFileByStream(self, isPut, stream, **attrs):
-        if self.__checkSumAlgoName and hasattr(hashlib, self.__checkSumAlgoName):
-            try:
-                origPos = stream.tell()
-                checkSum = getattr(hashlib, self.__checkSumAlgoName)(stream.read()).hexdigest()
-                stream.seek(origPos) # Get back to originalPosition
-            except Exception as e:
-                print(e)
-            else:
-                attrs['checkSum'] = checkSum
-                attrs['checkSumAlgoName'] = self.__checkSumAlgoName
+        if attrs.get('checkSum', None) is None:
+            if self.__checkSumAlgoName and hasattr(hashlib, self.__checkSumAlgoName):
+                try:
+                    origPos = stream.tell()
+                    checkSum = getattr(hashlib, self.__checkSumAlgoName)(stream.read()).hexdigest()
+                    stream.seek(origPos) # Get back to originalPosition
+                except Exception as e:
+                    print('pushUpFilesByStream', e)
+                else:
+                    attrs['checkSum'] = checkSum
+
+        attrs.setdefault('checkSumAlgoName', self.__checkSumAlgoName)
  
         method = requests.put if isPut else requests.post
         return self.___opHandler(method, self.__upUrl, data=attrs, files={'blob': stream})
@@ -81,7 +83,7 @@ class FileOnCloudHandler:
         try:
             dataIn = requests.get(formedUrl, stream=True)
         except Exception as e:
-            print(e)
+            print('downloadBlobToStream', e)
         else:
             if dataIn.status_code == 200:
                 return dataIn.iter_content(chunk_size=readChunkSize)

@@ -92,22 +92,38 @@ Sample Usage:
             ioS = bs.ioStream(bserial)
             print('ioS', ioS.read())
 
-        def testCloudPassage():
+        def testCloudPassagePickledVersion():
             import ___cloudPassage
             cc = ___cloudPassage.CloudPassageHandler()
-            data = dict((i, i*10) for i in range(9000))
-            res = cc.push(data, title='Dict of items 0-8999, keys i*10') 
+            data = dict((i, i*10) for i in range(9))
+            title = 'Dict of items 0-8999, keys i*10'
+            res = cc.push(data, title=title, asPickle=True)
             pulledObj = cc.pull(metaData='pickle')
 
+            print('PulledObj', pulledObj, data)
             assert(pulledObj == data)
-            print(pulledObj)
+
+            rmTry = cc.removeTrace(data, asPickle=True)
+            print(rmTry)
+
+        def testCloudPassageJSONVersion():
+            import ___cloudPassage
+            cc = ___cloudPassage.CloudPassageHandler()
+            data = dict((str(i), i*10) for i in range(9))
+            title = 'Dict of items 0-8999, keys i*10'
+            res = cc.push(data, title=title, asPickle=False)
+            pulledObj = cc.pull(metaData='json')
+
+            print('PulledObj', pulledObj, data)
+            assert(pulledObj == data)
 
             rmTry = cc.removeTrace(data)
             print(rmTry)
 
         def main():
             testSerializer()
-            testCloudPassage()
+            testCloudPassageJSONVersion()
+            testCloudPassagePickledVersion()
 
         if __name__ == '__main__':
             main()
