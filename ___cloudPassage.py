@@ -11,11 +11,22 @@ import Serializer
 
 class CloudPassageHandler:
     def __init__(self, addr='http://127.0.0.1', port='8000'):
-        self.__restDriver = restDriver.RestDriver(addr, port)
+        self.___mapAddrToDriver = {}
+        self.__restDriver = self.addDriver(addr, port)
 
         self.__checkSumFunc = self.getCheckSumFunc()
         self.__jsonSerializer = Serializer.JSONSerializer()
         self.__pickleSerializer = Serializer.BinarySerializer()
+
+    def addDriver(self, host, port):
+        hostMap = self.___mapAddrToDriver.setdefault(host, {})
+        retr = hostMap.get(port, None)
+        if not isinstance(retr, restDriver.RestDriver):
+            retr = restDriver.RestDriver(host, port)
+            print('\033[92mFresh restDriver at host: %s port: %s\033[00m'%(host, port))
+            hostMap[port] = retr
+
+        return retr
 
     def getCheckSumFunc(self):
         return getattr(hashlib, self.__restDriver.getCheckSumAlgoName(), None)
