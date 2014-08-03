@@ -1,7 +1,7 @@
 resty
 =====
 
-Client side kit for use with restAssured.
+Client side kit for use with [restAssured](https://github.com/odeke-em/restAssured.git "RestAssured").
 
 Sample Usage:
 ============
