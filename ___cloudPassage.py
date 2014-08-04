@@ -61,6 +61,9 @@ class CloudPassageHandler:
 
         return self.__restDriver.deleteBlob(checkSum=checkSum, metaData=sType)
 
+    def removeByParams(self, **q):
+        return self.__restDriver.deleteBlob(**q)
+
     def pull(self, **queryMap):
         # Returns the deserialized object essentially the 'live object'
         status, data = self.__manifestPull(**queryMap)
@@ -94,3 +97,6 @@ class CloudPassageHandler:
                 return 200, headItem
 
             return 404, manifest
+
+    def manifestPull(self, **q):
+        return self.__manifestPull(**q)
