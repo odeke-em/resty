@@ -39,8 +39,15 @@ class DbConn:
             print(e)
             dataOut['reason'] = e
         else:
-            dataOut['value'] = uR.read()
-            statusCode = uR.getcode()
+            # Next attempt to json parse the data
+            try:
+                jsonParsed = json.loads(uR.read().decode())
+            except Exception as e:
+                dataOut['reason'] = e
+            else:
+                dataOut['value'] = jsonParsed
+                statusCode = uR.getcode()
+
         finally:
             dataOut['status_code'] = statusCode
 
