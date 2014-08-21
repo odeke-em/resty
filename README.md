@@ -1,7 +1,7 @@
 resty
 =====
 
-Client side kit for use with restAssured.
+Client side kit for use with [restAssured](https://github.com/odeke-em/restAssured.git "RestAssured").
 
 Sample Usage:
 ============
@@ -60,8 +60,70 @@ Sample Usage:
             # Handling G for file handling app
             print(restDriver.getCloudFilesManifest(select='size,checkSum'))
 
+            # Handling D for file handling app
+            print(restDriver.deleteBlob(title='collabFib'))
+
             restDriver.registerLiason('Artist', '/thebear/artistHandler')
             print(restDriver.newArtist(name='Tester'))
+
+        if __name__ == '__main__':
+            main()
+
+    + This next example steps you through using resty & restAssured to save pickled/serialized
+    + data as a blob and then later re-using it in after deserialization.
+        * Sample usage might be in collaborative computing ie publish results from an expensive
+        * computation on one machine so that other machines can load it as live data.
+
+        + vi blobStore.py
+
+        #!/usr/bin/env python3
+
+        def testSerializer():
+            import Serializer
+            bs = Serializer.BinarySerializer()
+            js = Serializer.JSONSerializer()
+            data = dict((i, i) for i in range(100))
+            bserial = bs.serialize(data)
+            jserial = js.serialize(data)
+
+            bdserial = bs.deserialize(bserial)
+            jdserial = js.deserialize(jserial)
+            print('bdserial', bdserial)
+            ioS = bs.ioStream(bserial)
+            print('ioS', ioS.read())
+
+        def testCloudPassagePickledVersion():
+            import ___cloudPassage
+            cc = ___cloudPassage.CloudPassageHandler()
+            data = dict((i, i*10) for i in range(9))
+            title = 'Dict of items 0-8999, keys i*10'
+            res = cc.push(data, title=title, asPickle=True)
+            pulledObj = cc.pull(metaData='pickle')
+
+            print('PulledObj', pulledObj, data)
+            assert(pulledObj == data)
+
+            rmTry = cc.removeTrace(data, asPickle=True)
+            print(rmTry)
+
+        def testCloudPassageJSONVersion():
+            import ___cloudPassage
+            cc = ___cloudPassage.CloudPassageHandler()
+            data = dict((str(i), i*10) for i in range(9))
+            title = 'Dict of items 0-8999, keys i*10'
+            res = cc.push(data, title=title, asPickle=False)
+            pulledObj = cc.pull(metaData='json')
+
+            print('PulledObj', pulledObj, data)
+            assert(pulledObj == data)
+
+            rmTry = cc.removeTrace(data)
+            print(rmTry)
+
+        def main():
+            testSerializer()
+            testCloudPassageJSONVersion()
+            testCloudPassagePickledVersion()
 
         if __name__ == '__main__':
             main()

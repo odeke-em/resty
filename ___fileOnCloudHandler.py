@@ -3,6 +3,7 @@
 # Utility to enable file management on the cloud using restAssured
 
 import os
+import io
 import sys
 import json
 import hashlib
@@ -36,37 +37,39 @@ class FileOnCloudHandler:
         return self.__checkSumAlgoName
 
     def __pushUpFileByStream(self, isPut, stream, **attrs):
-        if self.__checkSumAlgoName and hasattr(hashlib, self.__checkSumAlgoName):
-            try:
-                origPos = stream.tell()
-                checkSum = getattr(hashlib, self.__checkSumAlgoName)(stream.read()).hexdigest()
-                stream.seek(origPos) # Get back to originalPosition
-            except Exception as e:
-                print(e)
-            else:
-                attrs['checkSum'] = checkSum
-                attrs['checkSumAlgoName'] = self.__checkSumAlgoName
+        if attrs.get('checkSum', None) is None:
+            if self.__checkSumAlgoName and hasattr(hashlib, self.__checkSumAlgoName):
+                try:
+                    origPos = stream.tell()
+                    checkSum = getattr(hashlib, self.__checkSumAlgoName)(stream.read()).hexdigest()
+                    stream.seek(origPos) # Get back to originalPosition
+                except Exception as e:
+                    print('pushUpFilesByStream', e)
+                else:
+                    attrs['checkSum'] = checkSum
+
+        attrs.setdefault('checkSumAlgoName', self.__checkSumAlgoName)
  
-        method = requests.put if  isPut else requests.post
-        return method(self.__upUrl, data=attrs, files={'blob': stream})
+        method = requests.put if isPut else requests.post
+        return self.___opHandler(method, self.__upUrl, data=attrs, files={'blob': stream})
 
     def __pushUpFileByPath(self, methodToggle, fPath, **attrs):
         response = None
-        if fPath and os.path.exists(fPath):
+        if fPath and os.path.exists(fPath) and os.access(fPath, os.R_OK):
             checkSumInfo = None
             with open(fPath, 'rb') as f:
                 response = self.__pushUpFileByStream(methodToggle, f, **attrs)
        
             return response
 
-    def uploadFileByStream(self, f, **attrs):
-        return self.__pushUpFileByStream(isPut=False, stream=f, **attrs)
+    def uploadBlobByStream(self, f, **attrs):
+        return self.__pushUpFileByStream(stream=f, **attrs)
 
-    def uploadFileByPath(self, fPath, **attrs):
+    def uploadBlobByPath(self, fPath, **attrs):
         return self.__pushUpFileByPath(False, fPath, **attrs)
 
     def updateFileByStream(self, f, **attrs):
-        return self.uploadFileByStream(isPut=True, stream=f, **attrs)
+        return self.uploadBlobByStream(isPut=True, f=f, **attrs)
 
     def updateFileByPath(self, fPath, **attrs):
         return self.__pushUpFileByPath(True, fPath, **attrs)
@@ -75,14 +78,18 @@ class FileOnCloudHandler:
     def __pathForMediaDownload(self, fPath):
         return self.__mediaUrl + fPath
 
-    def downloadFileToStream(self, fPath, readChunkSize=512):
+    def downloadBlobToStream(self, fPath, readChunkSize=512):
         formedUrl = self.__pathForMediaDownload(fPath)
-        dataIn = requests.get(formedUrl, stream=True)
-        if dataIn.status_code == 200:
-            return dataIn.iter_content(chunk_size=readChunkSize)
+        try:
+            dataIn = requests.get(formedUrl, stream=True)
+        except Exception as e:
+            print('downloadBlobToStream', e)
+        else:
+            if dataIn.status_code == 200:
+                return dataIn.iter_content(chunk_size=readChunkSize)
 
-    def downloadFileToDisk(self, pathOnCloudName, altName=None, chunkSize=1024):
-        chunkIterator = self.downloadFileToStream(pathOnCloudName, chunkSize)
+    def downloadBlobToDisk(self, pathOnCloudName, altName=None, chunkSize=1024):
+        chunkIterator = self.downloadBlobToStream(pathOnCloudName, chunkSize)
         writtenBytes = 0
         if hasattr(chunkIterator, '__next__'):
             localName = altName or os.path.basename(pathOnCloudName)
@@ -94,16 +101,40 @@ class FileOnCloudHandler:
 
         return writtenBytes
 
-    def deleteFileOnCloud(self, **attrsDict):
-        return requests.delete(self.__upUrl, **attrsDict)
+    def downloadBlobToBuffer(self, pathOnCloudName, chunkSize=1024):
+        chunkIterator = self.downloadBlobToStream(pathOnCloudName, chunkSize)
+        if hasattr(chunkIterator, '__next__'):
+            ioBuf = io.BytesIO()
+            for chunk in chunkIterator:
+                if chunk:
+                    ioBuf.write(chunk)
+
+            # Rewind it
+            ioBuf.seek(0)
+            return ioBuf
+
+    def deleteBlobOnCloud(self, **attrsDict):
+        return self.___opHandler(requests.delete, self.__upUrl, params=attrsDict)
+
+    def ___opHandler(self, func, *args, **kwargs):
+        res = None
+        try:
+            res = func(*args, **kwargs)
+        except Exception as e:
+            res = e
+
+        return res
 
     def getManifest(self, queryDict={}):
-        return requests.get(self.__upUrl, params=queryDict)
+        return self.___opHandler(requests.get, self.__upUrl, params=queryDict)
 
     def getParsedManifest(self, queryDict):
         return self.jsonParseResponse(self.getManifest(queryDict))
 
     def jsonParseResponse(self, reqResponse):
+        if isinstance(reqResponse, Exception):
+            return {'status_code': 500, 'reason': reqResponse}
+
         jsonParsed = dict()
         try:
             jsonParsed['data'] = json.loads(reqResponse.text).get('data', [])
@@ -120,7 +151,7 @@ def main():
         sys.stderr.write('%s \033[42m<paths>\n\033[00m'%(__file__))
     else:
         fH = FileOnCloudHandler('http://127.0.0.1:8000', 'sha1')
-        uploadFunc = lambda p: fH.uploadFileByPath(p, author=getDefaultUserName(), title=p)
+        uploadFunc = lambda p: fH.uploadBlobByPath(p, author=getDefaultUserName(), title=p)
         for p in sys.argv[1:]:
             if not os.path.exists(p):
                 print('Non existant path', p)
@@ -134,16 +165,16 @@ def main():
                 print(uploadFunc(p))
         '''
         srcPath = '/Users/emmanuelodeke/Desktop/bbndk.png'
-        uResponse =fH.uploadFileByPath(srcPath, author=getDefaultUserName(), title=srcPath)
+        uResponse =fH.uploadBlobByPath(srcPath, author=getDefaultUserName(), title=srcPath)
         # print(uResponse)
         print(uResponse.text)
   
         shortPath = os.path.basename(srcPath) 
-        print(fH.downloadFileToDisk('documents/' + shortPath))
+        print(fH.downloadBlobToDisk('documents/' + shortPath))
         '''
 
         print(fH.getManifest(dict(select='id')).text)
-        # print(fH.deleteFileOnCloud().text)
+        print(fH.deleteBlobOnCloud().text)
 
 if __name__ == '__main__':
     main()
