@@ -24,8 +24,7 @@ class Serializer:
     def ___convo(self, data, expected, aux=None):
         if isinstance(data, expected):
             return data
-
-        if isinstance(data, aux):
+        elif isinstance(data, aux):
             return expected(data, encoding='utf-8')
         else:
             return expected(data)
