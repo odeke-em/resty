@@ -10,10 +10,10 @@ pyVersion = sys.hexversion / (1<<24)
 
 if pyVersion >= 3:
         import urllib.request as urlReqModule
-        byteFyer = dict(encoding='utf-8')
+        byteFyer = {'encoding':'utf-8'}
 else:
         import urllib2 as urlReqModule
-        byteFyer = dict()
+        byteFyer = {}
 
 class DbConn:
     def __init__(self, baseUrl):
@@ -31,7 +31,7 @@ class DbConn:
         req.add_header('Content-Type', 'application/json')
         req.get_method = lambda : method.upper()
 
-        dataOut = dict()
+        dataOut = {}
         statusCode = 500
         try:
             uR = urlReqModule.urlopen(req, bytes(fmtdData, **byteFyer))

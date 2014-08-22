@@ -98,7 +98,6 @@ class RestDriver:
         return key if docStartRegCompile.search(key) else 'documents/'+key
 
     def downloadBlob(self, key, **attrs):
-        print('rege', docStartRegCompile.search(key)) 
         return self.__fCloudHandler.downloadBlobToDisk(self.___keyToDocCloudName(key), **attrs)
 
     def downloadBlobToStream(self, key, chunkSize=1024):
