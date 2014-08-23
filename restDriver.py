@@ -76,7 +76,6 @@ class RestDriver:
 
     def uploadStream(self, f, **attrs):
         attrs['isPut'] = False
-
         return self.__fCloudHandler.uploadBlobByStream(f, **attrs)
 
     def ___keyToDocCloudName(self, key):

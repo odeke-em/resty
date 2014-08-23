@@ -5,7 +5,10 @@ import io
 import json
 import pickle
 
-isCallable = lambda a: a and hasattr(a, '__call__')
+try:
+    from ___utils import isCallable
+except:
+    from .___utils import isCallable
 
 class Serializer:
     def __init__(self, serialzr=None, deserialzr=None, preSerializr=None):

@@ -16,9 +16,9 @@ except ImportError:
     sys.exit(-1)
 
 try:
-    from ___utils import getDefaultUserName
+    from ___utils import getDefaultUserName, isCallableAttr
 except:
-    from .___utils import getDefaultUserName
+    from .___utils import getDefaultUserName, isCallableAttr
 
 isRegPath = lambda p: not os.path.isdir(p)
 
@@ -42,9 +42,8 @@ class FileOnCloudHandler:
         return self.__checkSumAlgoName
 
     def __pushUpFileByStream(self, isPut, stream, **attrs):
-        
         if attrs.get('checkSum', None) is None:
-            if self.__checkSumAlgoName and hasattr(hashlib, self.__checkSumAlgoName):
+            if isCallableAttr(hashlib, self.__checkSumAlgoName):
                 try:
                     origPos = stream.tell()
                     checkSum = getattr(hashlib, self.__checkSumAlgoName)(stream.read()).hexdigest()
@@ -80,7 +79,6 @@ class FileOnCloudHandler:
     def updateFileByPath(self, fPath, **attrs):
         return self.__pushUpFileByPath(True, fPath, **attrs)
 
-
     def __pathForMediaDownload(self, fPath):
         return self.__mediaUrl + fPath
 
@@ -97,7 +95,7 @@ class FileOnCloudHandler:
     def downloadBlobToDisk(self, pathOnCloudName, altName=None, chunkSize=mmap.PAGESIZE):
         chunkIterator = self.downloadBlobToStream(pathOnCloudName, chunkSize)
         writtenBytes = 0
-        if hasattr(chunkIterator, '__next__'):
+        if isCallableAttr(chunkIterator, '__next__'):
             localName = altName or os.path.basename(pathOnCloudName)
             with open(localName, 'wb') as f:
                 for chunk in chunkIterator:
@@ -109,7 +107,7 @@ class FileOnCloudHandler:
 
     def downloadBlobToBuffer(self, pathOnCloudName, **kwargs):
         chunkIterator = self.downloadBlobToStream(pathOnCloudName, **kwargs) 
-        if hasattr(chunkIterator, '__next__'):
+        if isCallableAttr(chunkIterator, '__next__'):
             ioBuf = io.BytesIO()
             for chunk in chunkIterator:
                 if chunk:
