@@ -5,6 +5,7 @@
 import os
 import io
 import sys
+import mmap
 import json
 import hashlib
 
@@ -14,7 +15,11 @@ except ImportError:
     sys.stderr.write("\033[91mFirst install 'requests'\033[00m\n")
     sys.exit(-1)
 
-getDefaultUserName = lambda: os.environ.get('USER', 'Anonymous')
+try:
+    from ___utils import getDefaultUserName
+except:
+    from .___utils import getDefaultUserName
+
 isRegPath = lambda p: not os.path.isdir(p)
 
 class FileOnCloudHandler:
@@ -37,6 +42,7 @@ class FileOnCloudHandler:
         return self.__checkSumAlgoName
 
     def __pushUpFileByStream(self, isPut, stream, **attrs):
+        
         if attrs.get('checkSum', None) is None:
             if self.__checkSumAlgoName and hasattr(hashlib, self.__checkSumAlgoName):
                 try:
@@ -88,7 +94,7 @@ class FileOnCloudHandler:
             if dataIn.status_code == 200:
                 return dataIn.iter_content(chunk_size=readChunkSize)
 
-    def downloadBlobToDisk(self, pathOnCloudName, altName=None, chunkSize=1024):
+    def downloadBlobToDisk(self, pathOnCloudName, altName=None, chunkSize=mmap.PAGESIZE):
         chunkIterator = self.downloadBlobToStream(pathOnCloudName, chunkSize)
         writtenBytes = 0
         if hasattr(chunkIterator, '__next__'):
@@ -101,8 +107,8 @@ class FileOnCloudHandler:
 
         return writtenBytes
 
-    def downloadBlobToBuffer(self, pathOnCloudName, chunkSize=1024):
-        chunkIterator = self.downloadBlobToStream(pathOnCloudName, chunkSize)
+    def downloadBlobToBuffer(self, pathOnCloudName, **kwargs):
+        chunkIterator = self.downloadBlobToStream(pathOnCloudName, **kwargs) 
         if hasattr(chunkIterator, '__next__'):
             ioBuf = io.BytesIO()
             for chunk in chunkIterator:
@@ -151,7 +157,9 @@ def main():
         sys.stderr.write('%s \033[42m<paths>\n\033[00m'%(__file__))
     else:
         fH = FileOnCloudHandler('http://127.0.0.1:8000', 'sha1')
-        uploadFunc = lambda p: fH.uploadBlobByPath(p, author=getDefaultUserName(), title=p)
+        uploadFunc = lambda p: fH.uploadBlobByPath(
+            p, author=getDefaultUserName(), title=p
+        )
         for p in sys.argv[1:]:
             if not os.path.exists(p):
                 print('Non existant path', p)
@@ -163,16 +171,7 @@ def main():
                     print(list(dlResponse))
             else:
                 print(uploadFunc(p))
-        '''
-        srcPath = '/Users/emmanuelodeke/Desktop/bbndk.png'
-        uResponse =fH.uploadBlobByPath(srcPath, author=getDefaultUserName(), title=srcPath)
-        # print(uResponse)
-        print(uResponse.text)
-  
-        shortPath = os.path.basename(srcPath) 
-        print(fH.downloadBlobToDisk('documents/' + shortPath))
-        '''
-
+       
         print(fH.getManifest(dict(select='id')).text)
         print(fH.deleteBlobOnCloud().text)
 

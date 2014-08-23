@@ -4,7 +4,6 @@
 import io
 import json
 import pickle
-import hashlib
 
 isCallable = lambda a: a and hasattr(a, '__call__')
 

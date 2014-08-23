@@ -6,8 +6,6 @@
 import os
 import re
 import sys
-import json
-import collections
 from optparse import OptionParser
 
 try:
@@ -18,32 +16,15 @@ try:
     from ___fileOnCloudHandler import FileOnCloudHandler
 except ImportError as e:
     from .___fileOnCloudHandler import FileOnCloudHandler
-
-isCallable = lambda a: hasattr(a, '__call__')
-isCallableAttr = lambda obj, attrStr: isCallable(getattr(obj, attrStr, None))
-
-getDefaultAuthor = lambda: os.environ.get('USER', 'Anonymous')
-docStartRegCompile = re.compile('^documents', re.UNICODE)
-
-def produceAndParse(func, **dataIn):
-    dbCheck = func(**dataIn)
-    if  not isCallableAttr(dbCheck, 'get'):
-        return dbCheck
-    else:
-        response = dbCheck.get('value', None)
-        if not isCallableAttr(response, 'decode'):
-            return {'reason': 'No response could be decoded', 'status_code': 400}
-        else:
-            try:
-                outValue = json.loads(response.decode())
-                outValue['status_code'] = dbCheck.get('status_code', 200)
-                return outValue
-            except Exception as e:
-                return {'reason': str(e), 'status_code': 500}
+try:
+    from ___utils import docStartRegCompile
+except:
+    from .___utils import docStartRegCompile
 
 class RestDriver:
     __restConnectorMethods = {
-        'put': ('update', 's',), 'post': ('new', '',), 'delete': ('delete', 's'), 'get': ('get', 's',)
+        'put': ('update', 's',), 'post': ('new', '',),
+        'delete': ('delete', 's'), 'get': ('get', 's',)
     }
     def __init__(self, ip, port, checkSumAlgoName='sha1'):
         self.__checkSumAlgoName = checkSumAlgoName or 'sha1'
@@ -51,7 +32,9 @@ class RestDriver:
 
         self.__externNameToLiasonMap = dict()
 
-        self.__fCloudHandler =  FileOnCloudHandler(self.__baseUrl, self.__checkSumAlgoName)
+        self.__fCloudHandler =  FileOnCloudHandler(
+            self.__baseUrl, self.__checkSumAlgoName
+        )
 
     def getCheckSumAlgoName(self):
         return self.__fCloudHandler.getCheckSumAlgoName()
@@ -102,8 +85,8 @@ class RestDriver:
     def downloadBlob(self, key, **attrs):
         return self.__fCloudHandler.downloadBlobToDisk(self.___keyToDocCloudName(key), **attrs)
 
-    def downloadBlobToStream(self, key, chunkSize=1024):
-        return self.__fCloudHandler.downloadBlobToBuffer(self.___keyToDocCloudName(key), chunkSize)
+    def downloadBlobToStream(self, key, **kwargs):
+        return self.__fCloudHandler.downloadBlobToBuffer(self.___keyToDocCloudName(key), **kwargs)
 
     def deleteBlob(self, **attrs):
         return self.__fCloudHandler.deleteBlobOnCloud(**attrs)
