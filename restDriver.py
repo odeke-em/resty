@@ -20,17 +20,18 @@ except ImportError as e:
     from .___fileOnCloudHandler import FileOnCloudHandler
 
 isCallable = lambda a: hasattr(a, '__call__')
-getDefaultAuthor = lambda: os.environ.get('USER', 'Anonymous')
+isCallableAttr = lambda obj, attrStr: isCallable(getattr(obj, attrStr, None))
 
+getDefaultAuthor = lambda: os.environ.get('USER', 'Anonymous')
 docStartRegCompile = re.compile('^documents', re.UNICODE)
 
 def produceAndParse(func, **dataIn):
     dbCheck = func(**dataIn)
-    if  not (hasattr(dbCheck, 'get') and isCallable(dbCheck.get)):
+    if  not isCallableAttr(dbCheck, 'get'):
         return dbCheck
     else:
         response = dbCheck.get('value', None)
-        if not (hasattr(response, 'decode') and isCallable(response.decode)):
+        if not isCallableAttr(response, 'decode'):
             return {'reason': 'No response could be decoded', 'status_code': 400}
         else:
             try:
@@ -92,6 +93,7 @@ class RestDriver:
 
     def uploadStream(self, f, **attrs):
         attrs['isPut'] = False
+
         return self.__fCloudHandler.uploadBlobByStream(f, **attrs)
 
     def ___keyToDocCloudName(self, key):
