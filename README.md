@@ -1,4 +1,4 @@
-resty
+resty  [![wercker status](https://app.wercker.com/status/ed4b57958ef0d7fd0a6090ff7888e177/m "wercker status")](https://app.wercker.com/project/bykey/ed4b57958ef0d7fd0a6090ff7888e177)
 =====
 
 Client side kit for use with [restAssured](https://github.com/odeke-em/restAssured.git "RestAssured").
