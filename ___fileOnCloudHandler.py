@@ -108,6 +108,9 @@ class FileOnCloudHandler:
     def downloadBlobToBuffer(self, pathOnCloudName, **kwargs):
         chunkIterator = self.downloadBlobToStream(pathOnCloudName, **kwargs) 
         if isCallableAttr(chunkIterator, '__next__'):
+            # TODO: Instead of loading the whole file into memory, wrap the chunkIterator
+            #       in an object that implements the IOReader interface ie read(...) readline(...)
+            # Category: Major bottleneck
             ioBuf = io.BytesIO()
             for chunk in chunkIterator:
                 if chunk:
