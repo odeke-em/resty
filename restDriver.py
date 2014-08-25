@@ -22,10 +22,12 @@ except:
     from .___utils import docStartRegCompile
 
 class RestDriver:
+    _rawUrlRequester = HandlerLiason._rawUrlRequester
     __restConnectorMethods = {
         'put': ('update', 's',), 'post': ('new', '',),
         'delete': ('delete', 's'), 'get': ('get', 's',)
     }
+
     def __init__(self, ip, port, checkSumAlgoName='sha1'):
         self.__checkSumAlgoName = checkSumAlgoName or 'sha1'
         self.__baseUrl = '{i}:{p}'.format(i=ip.strip('/'), p=port.strip('/'))

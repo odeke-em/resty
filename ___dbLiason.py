@@ -16,6 +16,8 @@ else:
         byteFyer = {}
 
 class DbConn:
+    _rawUrlRequester = urlReqModule
+
     def __init__(self, baseUrl):
         self.baseUrl = baseUrl
 
@@ -27,14 +29,14 @@ class DbConn:
                 ['{k}={v}'.format(k=k, v=v) for k,v in getData.items()]
             )
 
-        req = urlReqModule.Request(reqUrl)
+        req = self._rawUrlRequester.Request(reqUrl)
         req.add_header('Content-Type', 'application/json')
         req.get_method = lambda : method.upper()
 
         dataOut = {}
         statusCode = 500
         try:
-            uR = urlReqModule.urlopen(req, bytes(fmtdData, **byteFyer))
+            uR = self._rawUrlRequester.urlopen(req, bytes(fmtdData, **byteFyer))
         except Exception as e:
             print(e)
             dataOut['reason'] = e
@@ -72,6 +74,7 @@ class DbConn:
         return self.__urlRequest('delete', **data)
 
 class HandlerLiason(object):
+    _rawUrlRequester = DbConn._rawUrlRequester
     def __init__(self, baseUrl, *args, **kwargs):
         self.baseUrl = baseUrl
         self.handler = DbConn(baseUrl)
