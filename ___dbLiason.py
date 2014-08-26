@@ -26,7 +26,7 @@ class DbConn:
         reqUrl = self.baseUrl
         if isGet:
             reqUrl = self.baseUrl + '/?' + '&'.join(
-                ['{k}={v}'.format(k=k, v=v) for k,v in getData.items()]
+                ('{k}={v}'.format(k=k, v=v) for k,v in getData.items())
             )
 
         req = self._rawUrlRequester.Request(reqUrl)
