@@ -6,9 +6,9 @@ import json
 import pickle
 
 try:
-    from ___utils import isCallable
+    from ___utils import isCallable, isCallableAttr
 except:
-    from .___utils import isCallable
+    from .___utils import isCallable, isCallableAttr
 
 class Serializer:
     def __init__(self, serialzr=None, deserialzr=None, preSerializr=None):

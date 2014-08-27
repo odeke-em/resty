@@ -2,6 +2,7 @@
 # Author: Emmanuel Odeke <odeke@ualberta.ca>
 
 import io
+import sys
 import time
 import pickle
 import hashlib
@@ -71,7 +72,7 @@ class CloudPassageHandler:
             keyName = data.get('content', None)
             if keyName:
                 stream = self.__restDriver.downloadBlobToStream(keyName)
-                if stream and Serializer.isCallable(stream.read):
+                if stream and Serializer.isCallableAttr(stream, '__next__'):
                     metaType = data.get('metaData', None)
 
                     selector = None
@@ -80,8 +81,18 @@ class CloudPassageHandler:
                     elif metaType == 'pickle':
                         selector = self.__pickleSerializer
 
-                    if selector:
-                        return selector.deserialize(stream.read())
+                    # Guess we've got to load it all into memory
+                    try:
+                        buf = stream.__next__() # Since we don't know the type
+                        for chunk in stream:
+                            buf += chunk
+                    except StopIteration as e:
+                        buf = None
+                    except Exception as e:
+                        sys.stderr.write('%s'%(e))
+                    finally:
+                        if selector and buf is not None:
+                            return selector.deserialize(buf)
 
     def __manifestPull(self, **identifiers):
         # Returns <errCode>, <data>

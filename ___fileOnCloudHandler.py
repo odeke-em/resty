@@ -27,6 +27,9 @@ class FileOnCloudHandler:
         self.setBaseURL(url)
         self.__checkSumAlgoName = checkSumAlgoName
 
+        # Just an alias/reference
+        self.downloadBlobToBuffer = self.downloadBlobToStream
+
     def setBaseURL(self, url):
         self.__baseUrl = url.strip('/')
         self.__upUrl = self.__baseUrl + '/uploader'
@@ -82,7 +85,7 @@ class FileOnCloudHandler:
     def __pathForMediaDownload(self, fPath):
         return self.__mediaUrl + fPath
 
-    def downloadBlobToStream(self, fPath, readChunkSize=512):
+    def __dlAndGetStream(self, fPath):
         formedUrl = self.__pathForMediaDownload(fPath)
         try:
             dataIn = requests.get(formedUrl, stream=True)
@@ -90,7 +93,12 @@ class FileOnCloudHandler:
             print('downloadBlobToStream', e)
         else:
             if dataIn.status_code == 200:
-                return dataIn.iter_content(chunk_size=readChunkSize)
+                return dataIn
+
+    def downloadBlobToStream(self, fPath, readChunkSize=mmap.PAGESIZE):
+        dataObj = self.__dlAndGetStream(fPath)
+        if isCallableAttr(dataObj, 'iter_content'):
+            return dataObj.iter_content(chunk_size=readChunkSize)
 
     def downloadBlobToDisk(self, pathOnCloudName, altName=None, chunkSize=mmap.PAGESIZE):
         chunkIterator = self.downloadBlobToStream(pathOnCloudName, chunkSize)
@@ -104,21 +112,6 @@ class FileOnCloudHandler:
                         f.flush()
 
         return writtenBytes
-
-    def downloadBlobToBuffer(self, pathOnCloudName, **kwargs):
-        chunkIterator = self.downloadBlobToStream(pathOnCloudName, **kwargs) 
-        if isCallableAttr(chunkIterator, '__next__'):
-            # TODO: Instead of loading the whole file into memory, wrap the chunkIterator
-            #       in an object that implements the IOReader interface ie read(...) readline(...)
-            # Category: Major bottleneck
-            ioBuf = io.BytesIO()
-            for chunk in chunkIterator:
-                if chunk:
-                    ioBuf.write(chunk)
-
-            # Rewind it
-            ioBuf.seek(0)
-            return ioBuf
 
     def deleteBlobOnCloud(self, **attrsDict):
         return self.___opHandler(requests.delete, self.__upUrl, params=attrsDict)
@@ -174,7 +167,7 @@ def main():
                 print(uploadFunc(p))
        
         print(fH.getManifest(dict(select='id')).text)
-        print(fH.deleteBlobOnCloud().text)
+        # print(fH.deleteBlobOnCloud().text)
 
 if __name__ == '__main__':
     main()
