@@ -49,7 +49,8 @@ class FileOnCloudHandler:
             if isCallableAttr(hashlib, self.__checkSumAlgoName):
                 try:
                     origPos = stream.tell()
-                    checkSum = getattr(hashlib, self.__checkSumAlgoName)(stream.read()).hexdigest()
+                    checkSum = getattr(hashlib, self.__checkSumAlgoName)\
+                                (stream.read()).hexdigest()
                     stream.seek(origPos) # Get back to originalPosition
                 except Exception as e:
                     print('pushUpFilesByStream', e)
@@ -57,17 +58,25 @@ class FileOnCloudHandler:
                     attrs['checkSum'] = checkSum
 
         attrs.setdefault('checkSumAlgoName', self.__checkSumAlgoName)
- 
-        method = requests.put if isPut else requests.post
-        return self.___opHandler(method, self.__upUrl, data=attrs, files={'blob': stream})
+
+        if not isPut: 
+            return self.___opHandler(
+                requests.post, self.__upUrl, data=attrs, files={'blob': stream}
+            )
+        else:
+            resp = requests.Response()
+            resp.status_code = 405
+            resp.reason = 'Unimplemented'
+            return resp
 
     def __pushUpFileByPath(self, methodToggle, fPath, **attrs):
         response = None
         if fPath and os.path.exists(fPath) and os.access(fPath, os.R_OK):
             checkSumInfo = None
             with open(fPath, 'rb') as f:
-                response = self.__pushUpFileByStream(methodToggle, f, **attrs)
-       
+                attrs['stream'] = f
+                attrs['isPut'] = methodToggle
+                response = self.__pushUpFileByStream(**attrs)
             return response
 
     def uploadBlobByStream(self, f, **attrs):
