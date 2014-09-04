@@ -12,7 +12,7 @@ Sample Usage:
             ...
     * Next step is using resty in your code.
     * This example assumes that for successful running, you have cloned and are running
-        [restAssured](https://github.com/odeke-em/restAssured.git) on the ip and port that you
+ [restAssured](https://github.com/odeke-em/restAssured.git) on the ip and port that you
         will provide when running sampleResty.py
     * Also it runs code from restAssured projects jobTable which saves jobs that are pushed up
       and will later on be assigned to different workers. Also the example shows how to use the
