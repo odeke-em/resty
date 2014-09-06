@@ -17,9 +17,9 @@ try:
 except ImportError as e:
     from .___fileOnCloudHandler import FileOnCloudHandler
 try:
-    from ___utils import docStartRegCompile, getDefaultAuthor
+    from ___utils import docStartRegCompile, getDefaultAuthor, isCallableAttr
 except:
-    from .___utils import docStartRegCompile, getDefaultAuthor
+    from .___utils import docStartRegCompile, getDefaultAuthor, isCallableAttr
 
 class RestDriver:
     _rawUrlRequester = HandlerLiason._rawUrlRequester
