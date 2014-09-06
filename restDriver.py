@@ -17,9 +17,9 @@ try:
 except ImportError as e:
     from .___fileOnCloudHandler import FileOnCloudHandler
 try:
-    from ___utils import docStartRegCompile
+    from ___utils import docStartRegCompile, getDefaultAuthor
 except:
-    from .___utils import docStartRegCompile
+    from .___utils import docStartRegCompile, getDefaultAuthor
 
 class RestDriver:
     _rawUrlRequester = HandlerLiason._rawUrlRequester
@@ -27,6 +27,7 @@ class RestDriver:
         'put': ('update', 's',), 'post': ('new', '',),
         'delete': ('delete', 's'), 'get': ('get', 's',)
     }
+    getDefaultAuthor = getDefaultAuthor
 
     def __init__(self, ip, port, checkSumAlgoName='sha1'):
         self.__checkSumAlgoName = checkSumAlgoName or 'sha1'
