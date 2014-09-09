@@ -43,16 +43,26 @@ class RestDriver:
         return self.__fCloudHandler.getCheckSumAlgoName()
 
     def registerLiason(self, shortName, url):
-        # Params: shortName eg 'Job'
-        #         url eg '/jobTable/jobHandler'
-        # Explanation: + Creates a name mangled dbLiason, and then creates the respective rest handlers as
-        #                defined in static dict '__restConnectorMethods' and creates their '*Conn' connectors
-        #              + Eg self.updateWorkers, self.deleteWorkers, self.getWorkers, etc that you will invoke
-        #                externally.
-        # Returns the created handler
+        '''
+        Params: shortName eg 'Job', url '/jobTable/jobHandler'
+         Explanation:
+            + Creates a name mangled dbLiason, and then creates the respective
+              rest handlers as defined in static dict '__restConnectorMethods'
+              and creates their '*Conn' connectors
+        
+            + Eg self.updateWorkers, self.deleteWorkers, self.getWorkers, etc
+              that you will invoke externally.
+
+            + To match naming convention ie camelCase, all method refs will be
+              capitalized on the first letter
+                ie shortName='apps', url='/apps' => self.updateApps
+                not self.updateapps
+        '''
 
         liasonName = '__%sLiason'%(shortName.lower())
-        setattr(self, liasonName, self.__createLiason(url))
+
+        # Match camelCase naming convention
+        setattr(self, liasonName.capitalize(), self.__createLiason(url))
         self.__externNameToLiasonMap[shortName] = getattr(self, liasonName)
 
         for restMethod, symNameTuple in self.__restConnectorMethods.items():
