@@ -62,13 +62,13 @@ class RestDriver:
         liasonName = '__%sLiason'%(shortName.lower())
 
         # Match camelCase naming convention
-        setattr(self, liasonName.capitalize(), self.__createLiason(url))
+        setattr(self, liasonName, self.__createLiason(url))
         self.__externNameToLiasonMap[shortName] = getattr(self, liasonName)
 
         for restMethod, symNameTuple in self.__restConnectorMethods.items():
             symName, nameSuffix = symNameTuple
             setattr(
-                self, '%s%s%s'%(symName, shortName, nameSuffix),
+                self, '%s%s%s'%(symName, shortName.capitalize(), nameSuffix),
                 self.__createLiasableFunc(shortName, '%sConn'%(restMethod))
             )
 
