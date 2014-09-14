@@ -146,7 +146,7 @@ class FileOnCloudHandler:
 
         jsonParsed = dict()
         try:
-            jsonParsed['data'] = json.loads(reqResponse.text).get('data', [])
+            jsonParsed['data'] = reqResponse.json().get('data', [])
         except Exception as e:
             print('Exception', e)
             jsonParsed['reason'] = str(e)
