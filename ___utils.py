@@ -3,6 +3,8 @@
 import os
 import re
 import sys
+import hmac
+import hashlib
 
 pyVersion = sys.hexversion / (1<<24)
 
@@ -20,6 +22,12 @@ getDefaultAuthor = lambda: os.environ.get('USER', 'Anonymous')
 getDefaultUserName = getDefaultAuthor
 docStartRegCompile = re.compile('^documents', re.UNICODE)
 
+def getHMACSignature(key, msg, digestmod=hashlib.sha256):
+    return hmac.HMAC(key, msg, digestmod)
+
+def getHMACHexDigest(*args, **kwargs):
+    return getHMACSignature(*args, **kwargs).hexdigest()
+
 # Custom Exceptions
 
 class UnReadableStreamException(Exception):
@@ -27,7 +35,6 @@ class UnReadableStreamException(Exception):
 
 class UnWriteableStreamException(Exception):
     pass
-
            
 def toBytes(data): 
     if isinstance(data, bytes):
