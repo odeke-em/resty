@@ -6,6 +6,7 @@
 import os
 import re
 import sys
+import hmac
 from optparse import OptionParser
 
 try:
@@ -17,9 +18,9 @@ try:
 except ImportError as e:
     from .___fileOnCloudHandler import FileOnCloudHandler
 try:
-    from ___utils import docStartRegCompile, getDefaultAuthor, isCallableAttr
+    from ___utils import docStartRegCompile, getDefaultAuthor, isCallableAttr, toBytes
 except:
-    from .___utils import docStartRegCompile, getDefaultAuthor, isCallableAttr
+    from .___utils import docStartRegCompile, getDefaultAuthor, isCallableAttr, toBytes
 
 class RestDriver:
     _rawUrlRequester = HandlerLiason._rawUrlRequester
@@ -29,15 +30,31 @@ class RestDriver:
     }
     getDefaultAuthor = getDefaultAuthor
 
-    def __init__(self, ip, port, checkSumAlgoName='sha1'):
+    def __init__(self, ip, port='8000', checkSumAlgoName='sha1', secretKey=None):
         self.__checkSumAlgoName = checkSumAlgoName or 'sha1'
-        self.__baseUrl = '{i}:{p}'.format(i=ip.strip('/'), p=port.strip('/'))
+       
+        ipStr = 'http://127.0.0.1'
+        if ip and isinstance(ip, str):
+            ipStr = ip
+
+        portStr = '8000'
+        if port and (isinstance(port, str) or hasattr(port, '__divmod__')):
+            portStr = str(int(port))
+
+        assert isCallableAttr(ipStr, 'strip'), 'Expecting strip method to be defined'
+        assert isCallableAttr(portStr, 'strip'), 'Expecting strip method to be defined'
+
+        self.__baseUrl = '{i}:{p}'.format(i=ipStr.strip('/'), p=portStr.strip('/'))
 
         self.__externNameToLiasonMap = dict()
 
         self.__fCloudHandler =  FileOnCloudHandler(
             self.__baseUrl, self.__checkSumAlgoName
         )
+
+        self.__hmac = None
+        if secretKey:
+            self.__createHMAC(secretKey)
 
     def getCheckSumAlgoName(self):
         return self.__fCloudHandler.getCheckSumAlgoName()
@@ -84,6 +101,22 @@ class RestDriver:
             method = lambda **aux: aux
         return method
 
+    def __createHMAC(self, secretKey):
+        assert secretKey, 'Expecting the secretKey'
+        bSecretKey = toBytes(secretKey)
+        assert isinstance(bSecretKey, bytes), 'The secretKey should be a byte instance'
+        self.__hmac = hmac.HMAC(key=bSecretKey)
+
+    def __signItem(self, item, outputPlainBytes=False):
+        self.__hmac.update(toBytes(item))
+        if outputPlainBytes:
+            return self.__hmac.digest()
+        else:
+            return self.__hmac.hexdigest()
+
+    def signItems(self, *bArgs, **outputKWargs):
+        return list(self.__signItem(item, **outputKWargs) for item in bArgs)
+
     def uploadBlob(self, srcPath, **attrs):
         return self.__fCloudHandler.uploadBlobByPath(srcPath, **attrs)
 
@@ -95,10 +128,12 @@ class RestDriver:
         return key if docStartRegCompile.search(key) else 'documents/'+key
 
     def downloadBlob(self, key, **attrs):
-        return self.__fCloudHandler.downloadBlobToDisk(self.___keyToDocCloudName(key), **attrs)
+        return self.__fCloudHandler.downloadBlobToDisk(
+                        self.___keyToDocCloudName(key), **attrs)
 
     def downloadBlobToStream(self, key, **kwargs):
-        return self.__fCloudHandler.downloadBlobToBuffer(self.___keyToDocCloudName(key), **kwargs)
+        return self.__fCloudHandler.downloadBlobToBuffer(
+                            self.___keyToDocCloudName(key), **kwargs)
 
     def deleteBlob(self, **attrs):
         return self.__fCloudHandler.deleteBlobOnCloud(**attrs)
@@ -133,7 +168,10 @@ class RestDriver:
 
 def cliParser():
     parser = OptionParser()
-    parser.add_option('-i', '--ip', default='http://127.0.0.1', help='Port server is on', dest='ip')
-    parser.add_option('-p', '--port', default='8000', help='IP address db connects to', dest='port')
+    parser.add_option('-i', '--ip', default='http://127.0.0.1',
+                                help='Port server is on', dest='ip')
+
+    parser.add_option('-p', '--port', default='8000',
+                                help='IP address db connects to', dest='port')
 
     return parser.parse_args()

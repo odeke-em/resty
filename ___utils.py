@@ -2,6 +2,16 @@
 
 import os
 import re
+import sys
+
+pyVersion = sys.hexversion / (1<<24)
+
+if pyVersion >= 3:
+    import urllib.request as urlReqModule
+    byteFyer = {'encoding':'utf-8'}
+else:
+    import urllib2 as urlReqModule
+    byteFyer = {}
 
 isCallable = lambda a: hasattr(a, '__call__')
 isCallableAttr = lambda obj, attrStr: isCallable(getattr(obj, attrStr, None))
@@ -18,3 +28,12 @@ class UnReadableStreamException(Exception):
 class UnWriteableStreamException(Exception):
     pass
 
+           
+def toBytes(data): 
+    if isinstance(data, bytes):
+        return data
+
+    elif not isinstance(data, str):
+        data = str(data)
+
+    return bytes(data, **byteFyer)

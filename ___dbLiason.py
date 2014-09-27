@@ -2,18 +2,12 @@
 # Author: Emmanuel Odeke <odeke@ualberta.ca>
 
 import os
-import sys
 import json
 import collections
-
-pyVersion = sys.hexversion / (1<<24)
-
-if pyVersion >= 3:
-        import urllib.request as urlReqModule
-        byteFyer = {'encoding':'utf-8'}
-else:
-        import urllib2 as urlReqModule
-        byteFyer = {}
+try:
+    from ___utils import toBytes, urlReqModule
+except:
+    from .___utils import toBytes, urlReqModule
 
 class DbConn:
     _rawUrlRequester = urlReqModule
@@ -36,7 +30,7 @@ class DbConn:
         dataOut = {}
         statusCode = 500
         try:
-            uR = self._rawUrlRequester.urlopen(req, bytes(fmtdData, **byteFyer))
+            uR = self._rawUrlRequester.urlopen(req, toBytes(fmtdData))
         except Exception as e:
             print(e)
             dataOut['reason'] = e
