@@ -134,11 +134,11 @@ class FileOnCloudHandler:
 
         return res
 
-    def getManifest(self, queryDict={}):
-        return self.___opHandler(requests.get, self.__upUrl, params=queryDict)
+    def getManifest(self, **query):
+        return self.___opHandler(requests.get, self.__upUrl, params=query)
 
-    def getParsedManifest(self, queryDict):
-        return self.jsonParseResponse(self.getManifest(queryDict))
+    def getParsedManifest(self, **query):
+        return self.jsonParseResponse(self.getManifest(**query))
 
     def jsonParseResponse(self, reqResponse):
         if isinstance(reqResponse, Exception):
@@ -163,6 +163,14 @@ def main():
         uploadFunc = lambda p: fH.uploadBlobByPath(
             p, author=getDefaultUserName(), title=p
         )
+
+        updateFunc = lambda p: fH.updateFileByPath(
+            p, author=getDefaultUserName(), title=p
+        )
+
+        manifest = fH.getParsedManifest()
+        print('File manifest', manifest)
+
         for p in sys.argv[1:]:
             if not os.path.exists(p):
                 print('Non existant path', p)
@@ -175,7 +183,7 @@ def main():
             else:
                 print(uploadFunc(p))
        
-        print(fH.getManifest(dict(select='id')).text)
+        print(fH.getParsedManifest(select='id'))
         # print(fH.deleteBlobOnCloud().text)
 
 if __name__ == '__main__':

@@ -30,7 +30,7 @@ class RestDriver:
     }
     getDefaultAuthor = getDefaultAuthor
 
-    def __init__(self, ip, port='8000', checkSumAlgoName='sha1', secretKey=None):
+    def __init__(self, ip, port='8000', checkSumAlgoName='sha1', secretKey=None, publicKey=None):
         self.__checkSumAlgoName = checkSumAlgoName or 'sha1'
        
         ipStr = 'http://127.0.0.1'
@@ -53,11 +53,20 @@ class RestDriver:
         )
 
         self.__hmac = None
-        if secretKey:
-            self.__createHMAC(secretKey)
+        self.__publicKey = publicKey or ''
+        self.updateSecretKey(secretKey)
 
     def getCheckSumAlgoName(self):
         return self.__fCloudHandler.getCheckSumAlgoName()
+
+    def _updatePublicKey(self, pubKey):
+        self.__publicKey = pubKey
+
+    def updateSecretKey(self, secretKey):
+        # We won't be storing the secret key in memory
+        # It gets loaded into the HMAC object asap and no ref to the key is made.
+        if secretKey:
+            self.__createHMAC(secretKey)
 
     def registerLiason(self, shortName, url):
         '''
@@ -104,8 +113,13 @@ class RestDriver:
     def __createHMAC(self, secretKey):
         assert secretKey, 'Expecting the secretKey'
         bSecretKey = toBytes(secretKey)
+        bPublicKey = toBytes(self.__publicKey)
+
         assert isinstance(bSecretKey, bytes), 'The secretKey should be a byte instance'
-        self.__hmac = hmac.HMAC(key=bSecretKey)
+        # Concatenate public and private keys to get the signature
+        catKey = bSecretKey + bPublicKey
+
+        self.__hmac = hmac.HMAC(key=catKey)
 
     def __signItem(self, item, outputPlainBytes=False):
         self.__hmac.update(toBytes(item))
