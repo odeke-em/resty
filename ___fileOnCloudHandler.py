@@ -44,18 +44,29 @@ class FileOnCloudHandler:
     def getCheckSumAlgoName(self):
         return self.__checkSumAlgoName
 
+    def getCheckSum(self, byteStream, algoName=None):
+        if not isCallableAttr(hashlib, algoName or self.__checkSumAlgoName):
+            return 400, 'No such algo exists'
+        try:
+            checkSumObj = getattr(hashlib, self.__checkSumAlgoName)(byteStream)
+        except Exception as e:
+            return 500, e
+        else:
+            return 200, checkSumObj
+
     def __pushUpFileByStream(self, isPut, stream, **attrs):
         if attrs.get('checkSum', None) is None:
-            if isCallableAttr(hashlib, self.__checkSumAlgoName):
-                try:
-                    origPos = stream.tell()
-                    checkSum = getattr(hashlib, self.__checkSumAlgoName)\
-                                (stream.read()).hexdigest()
-                    stream.seek(origPos) # Get back to originalPosition
-                except Exception as e:
-                    print('pushUpFilesByStream', e)
-                else:
-                    attrs['checkSum'] = checkSum
+            try:
+                origPos = stream.tell()
+                status, result = self.getCheckSum(stream.read())
+                if status != 200:
+                    return result 
+            except Exception as e:
+                print('pushUpFilesByStream', e)
+                return e
+            else:
+                stream.seek(origPos) # Get back to originalPosition
+                attrs['checkSum'] = result.hexdigest()
 
         attrs.setdefault('checkSumAlgoName', self.__checkSumAlgoName)
 

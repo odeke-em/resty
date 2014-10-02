@@ -30,7 +30,10 @@ class RestDriver:
     }
     getDefaultAuthor = getDefaultAuthor
 
-    def __init__(self, ip, port='8000', checkSumAlgoName='sha1', secretKey=None, publicKey=None):
+    def __init__(
+            self, ip, port='8000', checkSumAlgoName='sha1',
+            secretKey=None, publicKey=None):
+
         self.__checkSumAlgoName = checkSumAlgoName or 'sha1'
        
         ipStr = 'http://127.0.0.1'
@@ -160,7 +163,7 @@ class RestDriver:
         return self.__fCloudHandler.updateFileByStream(stream, **attrs)
 
     def getCloudFilesManifest(self, **queryParams):
-        return self.__fCloudHandler.getParsedManifest(queryParams)
+        return self.__fCloudHandler.getParsedManifest(**queryParams)
 
     def setBaseUrl(self, newUrl):
         self.__baseUrl = newUrl
@@ -179,6 +182,16 @@ class RestDriver:
 
     def __repr__(self):
         return 'RestDriver::%s'%(self.__baseUrl)
+
+    def getFileCheckSum(self, path, algoName=None):
+        checkSum = None
+        if path and os.path.isfile(path):
+            with open(path, 'rb') as f:
+                status, result = self.__fCloudHandler.getCheckSum(f.read(), algoName)
+                if status == 200:
+                    checkSum = result.hexdigest()
+
+        return checkSum
 
 def cliParser():
     parser = OptionParser()
