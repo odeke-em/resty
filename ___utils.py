@@ -15,6 +15,7 @@ else:
     import urllib2 as urlReqModule
     byteFyer = {}
 
+byteFy = lambda k: bytes(k, **byteFyer)
 isCallable = lambda a: hasattr(a, '__call__')
 isCallableAttr = lambda obj, attrStr: isCallable(getattr(obj, attrStr, None))
 

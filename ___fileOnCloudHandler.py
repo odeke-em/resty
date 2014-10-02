@@ -7,6 +7,7 @@ import io
 import sys
 import mmap
 import json
+import random
 import hashlib
 
 try:
@@ -171,12 +172,19 @@ def main():
         sys.stderr.write('%s \033[42m<paths>\n\033[00m'%(__file__))
     else:
         fH = FileOnCloudHandler('http://127.0.0.1:8000', 'sha1')
+        digest = bytes('%s%f'%(__file__, random.random()), encoding='utf-8')
+
+        status, checkSumObj = fH.getCheckSum(digest)
+
+        assert status == 200, "Failed to create checkSum"
+        sessionTag = checkSumObj.hexdigest()
+
         uploadFunc = lambda p: fH.uploadBlobByPath(
-            p, author=getDefaultUserName(), title=p
+            p, author=getDefaultUserName(), title=p, metaData=sessionTag
         )
 
         updateFunc = lambda p: fH.updateFileByPath(
-            p, author=getDefaultUserName(), title=p
+            p, author=getDefaultUserName(), title=p, metaData=sessionTag
         )
 
         manifest = fH.getParsedManifest()
@@ -195,7 +203,7 @@ def main():
                 print(uploadFunc(p))
        
         print(fH.getParsedManifest(select='id'))
-        # print(fH.deleteBlobOnCloud().text)
+        print(fH.deleteBlobOnCloud(metaData=sessionTag).text)
 
 if __name__ == '__main__':
     main()
