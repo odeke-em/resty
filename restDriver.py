@@ -193,6 +193,11 @@ class RestDriver:
 
         return checkSum
 
+    def getCheckSum(self, binaryData, algoName=None):
+        status, result = self.__fCloudHandler.getCheckSum(binaryData, algoName)
+        if status == 200:
+            return result
+
 def cliParser():
     parser = OptionParser()
     parser.add_option('-i', '--ip', default='http://127.0.0.1',
