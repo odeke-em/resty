@@ -15,6 +15,12 @@ else:
     import urllib2 as urlReqModule
     byteFyer = {}
 
+try:
+    import requests
+except ImportError:
+    sys.stderr.write("\033[91mFirst install 'requests'\033[00m\n")
+    sys.exit(-1)
+
 byteFy = lambda k: bytes(k, **byteFyer)
 isCallable = lambda a: hasattr(a, '__call__')
 isCallableAttr = lambda obj, attrStr: isCallable(getattr(obj, attrStr, None))

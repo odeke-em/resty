@@ -23,7 +23,7 @@ except:
     from .___utils import docStartRegCompile, getDefaultAuthor, isCallableAttr, toBytes
 
 class RestDriver:
-    _rawUrlRequester = HandlerLiason._rawUrlRequester
+    _rawUrlRequester = None # HandlerLiason._rawUrlRequester
     __restConnectorMethods = {
         'put': ('update', 's',), 'post': ('new', '',),
         'delete': ('delete', 's'), 'get': ('get', 's',)
@@ -103,8 +103,8 @@ class RestDriver:
 
         return getattr(self, liasonName)
 
-    def __createLiason(self, url):
-        return HandlerLiason(self.__baseUrl + url)
+    def __createLiason(self, url, tokenRetrievalURL=None):
+        return HandlerLiason(self.__baseUrl + url, tokenRetrievalURL=tokenRetrievalURL)
 
     def __createLiasableFunc(self, key, methodKey, **attrs):
         liason = self.__externNameToLiasonMap.get(key, None)

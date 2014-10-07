@@ -3,47 +3,57 @@
 
 import os
 import json
+import requests
 import collections
-try:
-    from ___utils import toBytes, urlReqModule
-except:
-    from .___utils import toBytes, urlReqModule
 
 class DbConn:
-    _rawUrlRequester = urlReqModule
-
-    def __init__(self, baseUrl):
+    def __init__(self, baseUrl, tokenRetrievalURL=None):
         self.baseUrl = baseUrl
+        self.__initSessionStore()
+        self.___createHTTPHandlers()
 
-    def __urlRequest(self, method, isGet=False, **getData):
-        fmtdData = json.dumps(getData)
-        reqUrl = self.baseUrl
-        if isGet:
-            reqUrl = self.baseUrl + '/?' + '&'.join(
-                ('{k}={v}'.format(k=k, v=v) for k,v in getData.items())
-            )
+        if tokenRetrievalURL:
+            self.refreshTokenStore(tokenRetrievalURL)
+    
+    def __initSessionStore(self):
+        self.__sessionStore = requests.Session()
+        self._updateHeaders({'Content-Type': 'application/json'})
 
-        req = self._rawUrlRequester.Request(reqUrl)
-        req.add_header('Content-Type', 'application/json')
-        req.get_method = lambda : method.upper()
+    def _updateHeaders(self, headerDict):
+        self.__sessionStore.headers.update(headerDict)
 
+    def refreshTokenStore(self, tokenRetrievalUrl):
+        rget = self.__sessionStore.get(tokenRetrievalUrl)
+
+    def __createHandler(self, methodName):
+        func = getattr(self.__sessionStore, methodName, None)
+        assert func != None, 'Expecting a successful op'
+
+        def performer(**data):
+            return self.__performOp(func, data=data)
+
+        return performer
+
+    def ___createHTTPHandlers(self):
+        _handlers = ('get', 'put', 'delete', 'post',)
+
+        for methodName in _handlers:
+            func = self.__createHandler(methodName)
+            setattr(self, methodName, func)
+
+    def __performOp(self, func, *args, **kwargs):
         dataOut = {}
-        statusCode = 500
+        result = func(self.baseUrl, *args, **kwargs)
+        statusCode = result.status_code
+
         try:
-            uR = self._rawUrlRequester.urlopen(req, toBytes(fmtdData))
-        except Exception as e:
-            print(e)
+            jsonParsed = result.json()
+        except ValueError as e: # Could not parse JSON from text
+            dataOut['reason'] = result.text
+        except Exception as e: # Other exception
             dataOut['reason'] = e
         else:
-            # Next attempt to json parse the data
-            try:
-                jsonParsed = json.loads(uR.read().decode())
-            except Exception as e:
-                dataOut['reason'] = e
-            else:
-                dataOut['value'] = jsonParsed
-                statusCode = uR.getcode()
-
+            dataOut['value'] = jsonParsed
         finally:
             dataOut['status_code'] = statusCode
 
@@ -55,23 +65,10 @@ class DbConn:
     def getBaseURL(self):
         return self.baseUrl
 
-    def get(self, **data):
-        return self.__urlRequest('get', isGet=True, **data)
-
-    def put(self, **data):
-        return self.__urlRequest('put', **data)
-
-    def post(self, **data):
-        return self.__urlRequest('post', **data)
-
-    def delete(self, **data):
-        return self.__urlRequest('delete', **data)
-
 class HandlerLiason(object):
-    _rawUrlRequester = DbConn._rawUrlRequester
     def __init__(self, baseUrl, *args, **kwargs):
         self.baseUrl = baseUrl
-        self.handler = DbConn(baseUrl)
+        self.handler = DbConn(baseUrl, *args, **kwargs)
 
     def postConn(self, **data):
         return self.handler.post(**data)
@@ -84,3 +81,29 @@ class HandlerLiason(object):
 
     def getConn(self, **data):
         return self.handler.get(**data)
+
+
+def main():
+    dc = DbConn('http://127.0.0.1:8000')
+
+    assert dc.get, "Get method must exist"
+    assert dc.put, "Put method must exist"
+    assert dc.post, "Post method must exist"
+    assert dc.delete, "Delete method must exist"
+
+    assert hasattr(dc.get, "__call__"), "Get must be callable"
+    assert hasattr(dc.put, "__call__"), "Put must be callable"
+    assert hasattr(dc.post, "__call__"), "Post must be callable"
+    assert hasattr(dc.delete, "__call__"), "Delete must be callable"
+
+    hl = HandlerLiason('http://127.0.0.1:8000/thebear')
+
+    assert hl.getConn, "Expected the getConn"
+    assert hl.putConn, "Expected the putConn"
+    assert hl.postConn, "Expected the postConn"
+    assert hl.deleteConn, "Expected the deleteConn"
+
+    print(hl.getConn())
+
+if __name__ == '__main__':
+    main()

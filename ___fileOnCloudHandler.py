@@ -11,15 +11,9 @@ import random
 import hashlib
 
 try:
-    import requests
-except ImportError:
-    sys.stderr.write("\033[91mFirst install 'requests'\033[00m\n")
-    sys.exit(-1)
-
-try:
-    from ___utils import getDefaultUserName, isCallableAttr
+    from ___utils import getDefaultUserName, isCallableAttr, requests
 except:
-    from .___utils import getDefaultUserName, isCallableAttr
+    from .___utils import getDefaultUserName, isCallableAttr, requests
 
 isRegPath = lambda p: not os.path.isdir(p)
 
@@ -30,6 +24,8 @@ class FileOnCloudHandler:
 
         # Just an alias/reference
         self.downloadBlobToBuffer = self.downloadBlobToStream
+
+        self.__sessionStore = requests.Session()
 
     def setBaseURL(self, url):
         self.__baseUrl = url.strip('/')
@@ -73,10 +69,11 @@ class FileOnCloudHandler:
 
         if not isPut: 
             return self.___opHandler(
-                requests.post, self.__upUrl, data=attrs, files={'blob': stream}
+               self.__sessionStore.post,
+               self.__upUrl, data=attrs, files={'blob': stream}
             )
         else:
-            resp = requests.Response()
+            resp = self.__sessionStore.Response()
             resp.status_code = 405
             resp.reason = 'Unimplemented'
             return resp
@@ -109,7 +106,7 @@ class FileOnCloudHandler:
     def __dlAndGetStream(self, fPath):
         formedUrl = self.__pathForMediaDownload(fPath)
         try:
-            dataIn = requests.get(formedUrl, stream=True)
+            dataIn = self.__sessionStore.get(formedUrl, stream=True)
         except Exception as e:
             print('downloadBlobToStream', e)
         else:
@@ -135,7 +132,8 @@ class FileOnCloudHandler:
         return writtenBytes
 
     def deleteBlobOnCloud(self, **attrsDict):
-        return self.___opHandler(requests.delete, self.__upUrl, params=attrsDict)
+        return self.___opHandler(
+                self.__sessionStore.delete, self.__upUrl, params=attrsDict)
 
     def ___opHandler(self, func, *args, **kwargs):
         res = None
@@ -147,7 +145,8 @@ class FileOnCloudHandler:
         return res
 
     def getManifest(self, **query):
-        return self.___opHandler(requests.get, self.__upUrl, params=query)
+        return self.___opHandler(
+                self.__sessionStore.get, self.__upUrl, params=query)
 
     def getParsedManifest(self, **query):
         return self.jsonParseResponse(self.getManifest(**query))
