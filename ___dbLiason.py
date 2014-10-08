@@ -27,7 +27,7 @@ class DbConn:
 
     def post(self, url=None, **data):
         return self.__parseResponse(
-            self.__sessionStore.post(url or self.baseUrl, data=data, headers={'Content-Type': 'json'})
+            self.__sessionStore.post(url or self.baseUrl, data=data)
         )
 
     def put(self, url=None, **data):
@@ -37,12 +37,13 @@ class DbConn:
 
     def delete(self, url=None, **data):
         return self.__parseResponse(
-            self.__sessionStore.delete(url or self.baseUrl, data=data)
+            self.__sessionStore.delete(url or self.baseUrl, params=data)
         )
 
     def get(self, url=None, **data):
+        print('data', data)
         return self.__parseResponse(
-            self.__sessionStore.get(url or self.baseUrl, data=data)
+            self.__sessionStore.get(url or self.baseUrl, params=data)
         )
 
     def __parseResponse(self, result):
