@@ -39,7 +39,6 @@ class DbConn:
         )
 
     def get(self, url=None, **data):
-        print(self.__sessionStore.headers)
         return self.__parseResponse(
             self.__sessionStore.get(url or self.baseUrl, data=data)
         )
@@ -51,7 +50,7 @@ class DbConn:
         try:
             jsonParsed = result.json()
         except ValueError as e: # Could not parse JSON from text
-            dataOut['reason'] = '' # result.text
+            dataOut['reason'] = result.text
         except Exception as e: # Other exception
             dataOut['reason'] = e
         else:
