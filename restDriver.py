@@ -30,8 +30,8 @@ class RestDriver:
     }
     getDefaultAuthor = getDefaultAuthor
 
-    def __init__(self, ip, port='8000',
-            checkSumAlgoName='sha1', secretKey=None, publicKey=None):
+    def __init__(self, ip, port='8000',checkSumAlgoName='sha1',
+            secretKey=None, publicKey=None, tokenRetrievalURL=None):
 
         self.__checkSumAlgoName = checkSumAlgoName or 'sha1'
        
@@ -71,7 +71,7 @@ class RestDriver:
         if secretKey:
             self.__createHMAC(secretKey)
 
-    def registerLiason(self, shortName, url):
+    def registerLiason(self, shortName, url, tokenRetrievalURL=None):
         '''
         Params: shortName eg 'Job', url '/jobTable/jobHandler'
          Explanation:
@@ -91,7 +91,7 @@ class RestDriver:
         liasonName = '__%sLiason'%(shortName.lower())
 
         # Match camelCase naming convention
-        setattr(self, liasonName, self.__createLiason(url))
+        setattr(self, liasonName, self.__createLiason(url, tokenRetrievalURL))
         self.__externNameToLiasonMap[shortName] = getattr(self, liasonName)
 
         for restMethod, symNameTuple in self.__restConnectorMethods.items():
@@ -104,7 +104,8 @@ class RestDriver:
         return getattr(self, liasonName)
 
     def __createLiason(self, url, tokenRetrievalURL=None):
-        return HandlerLiason(self.__baseUrl + url, tokenRetrievalURL=tokenRetrievalURL)
+        return HandlerLiason(
+                self.__baseUrl + url, tokenRetrievalURL=tokenRetrievalURL)
 
     def __createLiasableFunc(self, key, methodKey, **attrs):
         liason = self.__externNameToLiasonMap.get(key, None)

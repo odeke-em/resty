@@ -21,11 +21,13 @@ class DbConn:
         self.__sessionStore.headers.update(headerDict)
 
     def refreshTokenStore(self, tokenRetrievalUrl):
-        rget = self.get(tokenRetrievalUrl)
+        rget = self.__sessionStore.get(tokenRetrievalUrl)
+        if rget.status_code == 200:
+            self.__sessionStore.headers.update(rget.headers)
 
     def post(self, url=None, **data):
         return self.__parseResponse(
-            self.__sessionStore.post(url or self.baseUrl, data=data)
+            self.__sessionStore.post(url or self.baseUrl, data=data, headers={'Content-Type': 'json'})
         )
 
     def put(self, url=None, **data):
