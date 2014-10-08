@@ -10,46 +10,48 @@ class DbConn:
     def __init__(self, baseUrl, tokenRetrievalURL=None):
         self.baseUrl = baseUrl
         self.__initSessionStore()
-        self.___createHTTPHandlers()
 
         if tokenRetrievalURL:
             self.refreshTokenStore(tokenRetrievalURL)
     
     def __initSessionStore(self):
         self.__sessionStore = requests.Session()
-        self._updateHeaders({'Content-Type': 'application/json'})
 
     def _updateHeaders(self, headerDict):
         self.__sessionStore.headers.update(headerDict)
 
     def refreshTokenStore(self, tokenRetrievalUrl):
-        rget = self.__sessionStore.get(tokenRetrievalUrl)
+        rget = self.get(tokenRetrievalUrl)
 
-    def __createHandler(self, methodName):
-        func = getattr(self.__sessionStore, methodName, None)
-        assert func != None, 'Expecting a successful op'
+    def post(self, url=None, **data):
+        return self.__parseResponse(
+            self.__sessionStore.post(url or self.baseUrl, data=data)
+        )
 
-        def performer(**data):
-            return self.__performOp(func, data=data)
+    def put(self, url=None, **data):
+        return self.__parseResponse(
+            self.__sessionStore.put(url or self.baseUrl, data=data)
+        )
 
-        return performer
+    def delete(self, url=None, **data):
+        return self.__parseResponse(
+            self.__sessionStore.delete(url or self.baseUrl, data=data)
+        )
 
-    def ___createHTTPHandlers(self):
-        _handlers = ('get', 'put', 'delete', 'post',)
+    def get(self, url=None, **data):
+        print(self.__sessionStore.headers)
+        return self.__parseResponse(
+            self.__sessionStore.get(url or self.baseUrl, data=data)
+        )
 
-        for methodName in _handlers:
-            func = self.__createHandler(methodName)
-            setattr(self, methodName, func)
-
-    def __performOp(self, func, *args, **kwargs):
+    def __parseResponse(self, result):
         dataOut = {}
-        result = func(self.baseUrl, *args, **kwargs)
         statusCode = result.status_code
 
         try:
             jsonParsed = result.json()
         except ValueError as e: # Could not parse JSON from text
-            dataOut['reason'] = result.text
+            dataOut['reason'] = '' # result.text
         except Exception as e: # Other exception
             dataOut['reason'] = e
         else:

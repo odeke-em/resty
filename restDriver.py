@@ -30,9 +30,8 @@ class RestDriver:
     }
     getDefaultAuthor = getDefaultAuthor
 
-    def __init__(
-            self, ip, port='8000', checkSumAlgoName='sha1',
-            secretKey=None, publicKey=None):
+    def __init__(self, ip, port='8000',
+            checkSumAlgoName='sha1', secretKey=None, publicKey=None):
 
         self.__checkSumAlgoName = checkSumAlgoName or 'sha1'
        
@@ -47,7 +46,8 @@ class RestDriver:
         assert isCallableAttr(ipStr, 'strip'), 'Expecting strip method to be defined'
         assert isCallableAttr(portStr, 'strip'), 'Expecting strip method to be defined'
 
-        self.__baseUrl = '{i}:{p}'.format(i=ipStr.strip('/'), p=portStr.strip('/'))
+        self.__baseUrl = '{i}:{p}'.format(
+                                      i=ipStr.strip('/'), p=portStr.strip('/'))
 
         self.__externNameToLiasonMap = dict()
 
@@ -187,7 +187,8 @@ class RestDriver:
         checkSum = None
         if path and os.path.isfile(path):
             with open(path, 'rb') as f:
-                status, result = self.__fCloudHandler.getCheckSum(f.read(), algoName)
+                status, result = self.__fCloudHandler.getCheckSum(
+                                                        f.read(), algoName)
                 if status == 200:
                     checkSum = result.hexdigest()
 
