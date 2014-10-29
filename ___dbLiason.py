@@ -32,7 +32,7 @@ class DbConn:
 
     def put(self, url=None, **data):
         return self.__parseResponse(
-            self.__sessionStore.put(url or self.baseUrl, data=data)
+            self.__sessionStore.put(url or self.baseUrl, params=data)
         )
 
     def delete(self, url=None, **data):

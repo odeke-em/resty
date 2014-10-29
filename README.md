@@ -3,21 +3,31 @@ resty  [![wercker status](https://app.wercker.com/status/ed4b57958ef0d7fd0a6090f
 
 Client side kit for use with [restAssured](https://github.com/odeke-em/restAssured.git "RestAssured").
 
+Resty handles CRUD operations for data, files, even blobs 
+
 Sample Usage:
 ============
-    * First step is including resty in your project so that your project space looks like this:
-        projectSrc/
-            resty
-            test.py
-            ...
-    * Next step is using resty in your code.
-    * This example assumes that for successful running, you have cloned and are running
- [restAssured](https://github.com/odeke-em/restAssured.git) on the ip and port that you
-        will provide when running sampleResty.py
-    * Also it runs code from restAssured projects jobTable which saves jobs that are pushed up
-      and will later on be assigned to different workers. Also the example shows how to use the
-      file handling service with restAssured.
-    * vi sampleResty.py
+* First step is including resty in your project so that your project space looks like this:
+    projectSrc/
+        resty
+        <rest_of_code>
+        ...
+
+* Next step is using resty in your code.
+
+* This example assumes that for successful running, you have cloned and are running
+
+[restAssured](https://github.com/odeke-em/restAssured.git)
+
+on the ip and port that you will provide when running sampleResty.py
+
+* Also it runs code from restAssured projects jobTable which saves jobs that are pushed up
+
+and will later on be assigned to different workers. Also the example shows how to use the
+
+file handling service with restAssured.
+
+* vi sampleResty.py
 
         #!/usr/bin/env python
 
@@ -69,9 +79,13 @@ Sample Usage:
         if __name__ == '__main__':
             main()
 
-    + This next example steps you through using resty & restAssured to save pickled/serialized
-    + data as a blob and then later re-using it in after deserialization.
+
++ This next example steps you through using resty & restAssured to save pickled/serialized
+
++ data as a blob and then later re-using it in after deserialization.
+
         * Sample usage might be in collaborative computing ie publish results from an expensive
+
         * computation on one machine so that other machines can load it as live data.
 
         + vi blobStore.py

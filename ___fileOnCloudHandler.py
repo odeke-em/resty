@@ -58,25 +58,26 @@ class FileOnCloudHandler:
                 status, result = self.getCheckSum(stream.read())
                 if status != 200:
                     return result 
+
+                stream.seek(origPos) # Get back to original position
             except Exception as e:
                 print('pushUpFilesByStream', e)
                 return e
             else:
-                stream.seek(origPos) # Get back to originalPosition
                 attrs['checkSum'] = result.hexdigest()
 
         attrs.setdefault('checkSumAlgoName', self.__checkSumAlgoName)
 
         if not isPut: 
-            return self.___opHandler(
-               self.__sessionStore.post,
-               self.__upUrl, data=attrs, files={'blob': stream}
+            return self.___opHandler(self.__sessionStore.post,
+                self.__upUrl, data=attrs, files={'blob': stream}
             )
         else:
-            resp = self.__sessionStore.Response()
-            resp.status_code = 405
-            resp.reason = 'Unimplemented'
-            return resp
+            q = attrs.get('query', {})
+            d = attrs.get('data', {})
+            return self.___opHandler(self.__sessionStore.put,
+                self.__upUrl, data=d, params=q, files={'blob': stream}
+            )
 
     def __pushUpFileByPath(self, methodToggle, fPath, **attrs):
         response = None
