@@ -53,4 +53,5 @@ coverage.xml
 docs/_build/
 
 # Vim
-*.swp
+*.sw[op]
+*.DS_Store
