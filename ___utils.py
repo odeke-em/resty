@@ -29,6 +29,9 @@ getDefaultAuthor = lambda: os.environ.get('USER', 'Anonymous')
 getDefaultUserName = getDefaultAuthor
 docStartRegCompile = re.compile('^documents', re.UNICODE)
 
+nonStartSeqReg = re.compile('^[^_a-zA-Z]', re.UNICODE)
+unKnownCharSetReg = re.compile('[^_a-zA-Z0-9]+', re.UNICODE)
+
 def getHMACSignature(key, msg, digestmod=hashlib.sha256):
     return hmac.HMAC(key, msg, digestmod)
 
@@ -51,3 +54,9 @@ def toBytes(data):
         data = str(data)
 
     return bytes(data, **byteFyer)
+
+def prepareLiasonName(strPath):
+    strPath = nonStartSeqReg.sub('_', str(strPath))
+    strPath = unKnownCharSetReg.sub('_', strPath)
+
+    return strPath

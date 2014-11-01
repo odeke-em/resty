@@ -18,9 +18,15 @@ try:
 except ImportError as e:
     from .___fileOnCloudHandler import FileOnCloudHandler
 try:
-    from ___utils import docStartRegCompile, getDefaultAuthor, isCallableAttr, toBytes
+    from ___utils import (
+        docStartRegCompile, getDefaultAuthor,
+        isCallableAttr, toBytes, prepareLiasonName
+    )
 except:
-    from .___utils import docStartRegCompile, getDefaultAuthor, isCallableAttr, toBytes
+    from .___utils import (
+        docStartRegCompile, getDefaultAuthor,
+        isCallableAttr, toBytes, prepareLiasonName
+    )
 
 class RestDriver:
     _rawUrlRequester = None # HandlerLiason._rawUrlRequester
@@ -88,6 +94,13 @@ class RestDriver:
                 not self.updateapps
         '''
 
+        if not (isinstance(shortName, str) and shortName):
+            return None
+
+        if not (isinstance(url, str) and url):
+            return None
+
+        shortName = prepareLiasonName(shortName)
         liasonName = '__%sLiason'%(shortName.lower())
 
         # Match camelCase naming convention
