@@ -31,9 +31,14 @@ class DbConn:
         )
 
     def put(self, url=None, **data):
-        return self.__parseResponse(
-            self.__sessionStore.put(url or self.baseUrl, params=data)
+        outDict = dict(
+            queryParams=json.dumps(data.get('queryParams', {})),
+            updateParams=json.dumps(data.get('updateParams', {}))
         )
+
+        return self.__parseResponse(self.__sessionStore.put(
+            url or self.baseUrl, params=outDict
+        ))
 
     def delete(self, url=None, **data):
         return self.__parseResponse(
