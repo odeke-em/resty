@@ -10,9 +10,10 @@ class DbConn:
     def __init__(self, baseUrl, tokenRetrievalURL=None):
         self.baseUrl = baseUrl
         self.__initSessionStore()
+        self.__lastTokenRetrievalURL = tokenRetrievalURL
 
         if tokenRetrievalURL:
-            self.refreshTokenStore(tokenRetrievalURL)
+            self.refreshTokenStore(self.__lastTokenRetrievalURL)
     
     def __initSessionStore(self):
         self.__sessionStore = requests.Session()
@@ -21,14 +22,18 @@ class DbConn:
         self.__sessionStore.headers.update(headerDict)
 
     def refreshTokenStore(self, tokenRetrievalUrl):
-        rget = self.__sessionStore.get(tokenRetrievalUrl)
+        rget = self.__sessionStore.get(
+                        tokenRetrievalUrl or self.__lastTokenRetrievalURL)
+
         if rget.status_code == 200:
+            self.__lastTokenRetrievalURL = tokenRetrievalUrl
             self.__sessionStore.headers.update(rget.headers)
+            return True
 
     def post(self, url=None, **data):
         return self.__parseResponse(
-            self.__sessionStore.post(url or self.baseUrl, data=data)
-        )
+            self.__sessionStore.post(url or self.baseUrl, data=json.dumps(data)
+        ))
 
     def put(self, url=None, **data):
         outDict = dict(
@@ -46,7 +51,6 @@ class DbConn:
         )
 
     def get(self, url=None, **data):
-        print('data', data)
         return self.__parseResponse(
             self.__sessionStore.get(url or self.baseUrl, params=data)
         )
@@ -90,6 +94,9 @@ class HandlerLiason(object):
 
     def getConn(self, **data):
         return self.handler.get(**data)
+
+    def refreshTokenStoreConn(self, tokenRefreshURL=None):
+        return self.handler.refreshTokenStore(tokenRefreshURL)
 
 
 def main():

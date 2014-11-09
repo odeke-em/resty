@@ -30,9 +30,11 @@ except:
 
 class RestDriver:
     _rawUrlRequester = None # HandlerLiason._rawUrlRequester
+
     __restConnectorMethods = {
         'put': ('update', 's',), 'post': ('new', '',),
-        'delete': ('delete', 's'), 'get': ('get', 's',)
+        'delete': ('delete', 's'), 'get': ('get', 's',),
+        'refreshTokenStore': ('refresh', '')
     }
     getDefaultAuthor = getDefaultAuthor
 
@@ -123,8 +125,10 @@ class RestDriver:
     def __createLiasableFunc(self, key, methodKey, **attrs):
         liason = self.__externNameToLiasonMap.get(key, None)
         method = getattr(liason, methodKey, None)
+
         if method is None:
             method = lambda **aux: aux
+
         return method
 
     def __createHMAC(self, secretKey):
