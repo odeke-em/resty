@@ -23,8 +23,8 @@ def testSerializer():
     print('ioS data from the stream', ioR)
 
 def testCloudPassagePickledVersion():
-    import ___cloudPassage
-    cc = ___cloudPassage.CloudPassageHandler()
+    from entrails.cloudPassage import CloudPassageHandler
+    cc = CloudPassageHandler()
     data = dict((i, i*10) for i in range(9))
     title = 'Dict of items 0-8999, keys i*10'
     res = cc.push(data, title=title, asPickle=True)
@@ -37,8 +37,8 @@ def testCloudPassagePickledVersion():
     print(rmTry)
 
 def testCloudPassageJSONVersion():
-    import ___cloudPassage
-    cc = ___cloudPassage.CloudPassageHandler()
+    from entrails.cloudPassage import CloudPassageHandler
+    cc = CloudPassageHandler()
     data = dict((str(i), i*10) for i in range(9))
     title = 'Dict of items 0-8999, keys i*10'
     res = cc.push(data, title=title, asPickle=False)

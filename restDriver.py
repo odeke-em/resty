@@ -9,24 +9,12 @@ import sys
 import hmac
 from optparse import OptionParser
 
-try:
-    from ___dbLiason import HandlerLiason
-except ImportError as e:
-    from .___dbLiason import HandlerLiason
-try:
-    from ___fileOnCloudHandler import FileOnCloudHandler
-except ImportError as e:
-    from .___fileOnCloudHandler import FileOnCloudHandler
-try:
-    from ___utils import (
+from entrails.dbLiason import HandlerLiason
+from entrails.fileOnCloudHandler import FileOnCloudHandler
+from entrails.utils import(
         docStartRegCompile, getDefaultAuthor,
         isCallableAttr, toBytes, prepareLiasonName
-    )
-except:
-    from .___utils import (
-        docStartRegCompile, getDefaultAuthor,
-        isCallableAttr, toBytes, prepareLiasonName
-    )
+)
 
 class RestDriver:
     _rawUrlRequester = None # HandlerLiason._rawUrlRequester

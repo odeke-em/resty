@@ -11,11 +11,9 @@ import random
 import hashlib
 
 try:
-    from ___utils import getDefaultUserName, isCallableAttr, requests
+    from utils import getDefaultUserName, isCallableAttr, requests
 except:
-    from .___utils import getDefaultUserName, isCallableAttr, requests
-
-isRegPath = lambda p: not os.path.isdir(p)
+    from .utils import getDefaultUserName, isCallableAttr, requests
 
 class FileOnCloudHandler:
     def __init__(self, url, checkSumAlgoName='md5'):
