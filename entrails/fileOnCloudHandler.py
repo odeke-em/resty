@@ -15,8 +15,16 @@ try:
 except:
     from .utils import getDefaultUserName, isCallableAttr, requests
 
+sys.path.append('./entrails')
+import httpStatusCodes as httpStatus
+
+def prepareResponse(statusCode, *rest):
+    response = requests.Response()
+    response.status_code = statusCode or httpStatus.BAD_REQUEST
+    return response
+
 class FileOnCloudHandler:
-    def __init__(self, url, checkSumAlgoName='md5'):
+    def __init__(self, url, checkSumAlgoName='sha256'):
         self.setBaseURL(url)
         self.__checkSumAlgoName = checkSumAlgoName
 
@@ -45,16 +53,16 @@ class FileOnCloudHandler:
         try:
             checkSumObj = getattr(hashlib, self.__checkSumAlgoName)(byteStream)
         except Exception as e:
-            return 500, e
+            return httpStatus.INTERNAL_SERVER_ERROR, e
         else:
-            return 200, checkSumObj
+            return httpStatus.OK, checkSumObj
 
     def __pushUpFileByStream(self, isPut, stream, **attrs):
         if attrs.get('checkSum', None) is None:
             try:
                 origPos = stream.tell()
                 status, result = self.getCheckSum(stream.read())
-                if status != 200:
+                if status != httpStatus.OK:
                     return result 
 
                 stream.seek(origPos) # Get back to original position
@@ -70,22 +78,28 @@ class FileOnCloudHandler:
             return self.___opHandler(self.__sessionStore.post,
                 self.__upUrl, data=attrs, files={'blob': stream}
             )
-        else:
-            q = attrs.get('query', {})
-            d = attrs.get('data', {})
-            return self.___opHandler(self.__sessionStore.put,
-                self.__upUrl, data=d, params=q, files={'blob': stream}
-            )
+        
+        q = attrs.get('query', {})
+        d = attrs.get('data', {})
+        return self.___opHandler(self.__sessionStore.put,
+            self.__upUrl, data=d, params=q, files={'blob': stream}
+        )
 
     def __pushUpFileByPath(self, methodToggle, fPath, **attrs):
         response = None
-        if fPath and os.path.exists(fPath) and os.access(fPath, os.R_OK):
-            checkSumInfo = None
-            with open(fPath, 'rb') as f:
-                attrs['stream'] = f
-                attrs['isPut'] = methodToggle
-                response = self.__pushUpFileByStream(**attrs)
-            return response
+        if not (fPath and os.access(fPath, os.R_OK)):
+            return prepareResponse(httpStatus.FORBIDDEN)
+
+        if not os.path.isfile(fPath):
+            return prepareResponse(httpStatus.NOT_FOUND)
+
+        checkSumInfo = None
+        with open(fPath, 'rb') as f:
+            attrs['stream'] = f
+            attrs['isPut'] = methodToggle
+            response = self.__pushUpFileByStream(**attrs)
+        
+        return response
 
     def uploadBlobByStream(self, f, **attrs):
         return self.__pushUpFileByStream(stream=f, **attrs)
@@ -109,7 +123,7 @@ class FileOnCloudHandler:
         except Exception as e:
             print('downloadBlobToStream', e)
         else:
-            if dataIn.status_code == 200:
+            if dataIn.status_code == httpStatus.OK:
                 return dataIn
 
     def downloadBlobToStream(self, fPath, readChunkSize=mmap.PAGESIZE):
@@ -145,14 +159,16 @@ class FileOnCloudHandler:
 
     def getManifest(self, **query):
         return self.___opHandler(
-                self.__sessionStore.get, self.__upUrl, params=query)
+                        self.__sessionStore.get, self.__upUrl, params=query)
 
     def getParsedManifest(self, **query):
         return self.jsonParseResponse(self.getManifest(**query))
 
     def jsonParseResponse(self, reqResponse):
         if isinstance(reqResponse, Exception):
-            return {'status_code': 500, 'reason': reqResponse}
+            return {
+                'status_code': httpStatus.INTERNAL_SERVER_ERROR, 'reason': reqResponse
+            }
 
         jsonParsed = dict()
         try:
@@ -167,14 +183,14 @@ class FileOnCloudHandler:
 def main():
     argc = len(sys.argv)
     if argc < 2:
-        sys.stderr.write('%s \033[42m<paths>\n\033[00m'%(__file__))
+        sys.stderr.write('%s \033[42m<paths>\033[00m\n'%(__file__))
     else:
         fH = FileOnCloudHandler('http://127.0.0.1:8000', 'sha1')
         digest = bytes('%s%f'%(__file__, random.random()), encoding='utf-8')
 
         status, checkSumObj = fH.getCheckSum(digest)
 
-        assert status == 200, "Failed to create checkSum"
+        assert status == httpStatus.OK, "Failed to create checkSum"
         sessionTag = checkSumObj.hexdigest()
 
         uploadFunc = lambda p: fH.uploadBlobByPath(

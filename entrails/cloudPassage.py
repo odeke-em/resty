@@ -9,6 +9,7 @@ import hashlib
 
 import restDriver
 import Serializer
+import httpStatusCodes as httpStatus
 
 class CloudPassageHandler:
     def __init__(self, addr='http://127.0.0.1', port='8000'):
@@ -50,7 +51,7 @@ class CloudPassageHandler:
         stream = selector.ioStream(rawObject)
         kwargs.setdefault('uri', 'Computation@%s'%(time.time()))
         func = self.__restDriver.uploadStream
-        if status == 200 and retr:
+        if status == httpStatus.OK and retr:
             func = self.__restDriver.updateStream
 
         return func(stream, checkSum=checkSum, metaData=sType, **kwargs)
@@ -67,46 +68,50 @@ class CloudPassageHandler:
     def pull(self, **queryMap):
         # Returns the deserialized object essentially the 'live object'
         status, data = self.__manifestPull(**queryMap)
-        if status == 200:
-            keyName = data.get('content', None)
-            if keyName:
-                stream = self.__restDriver.downloadBlobToStream(keyName)
-                if stream and Serializer.isCallableAttr(stream, '__next__'):
-                    metaType = data.get('metaData', None)
+        if status != httpStatus.OK:
+            return
 
-                    selector = None
-                    if metaType == 'json': 
-                        selector = self.__jsonSerializer
-                    elif metaType == 'pickle':
-                        selector = self.__pickleSerializer
+        keyName = data.get('content', None)
+        if not keyName:
+            return
+        stream = self.__restDriver.downloadBlobToStream(keyName)
+        if not (stream and Serializer.isCallableAttr(stream, '__next__')):
+            return
+        
+        metaType = data.get('metaData', None)
 
-                    # Guess we've got to load it all into memory
-                    try:
-                        buf = stream.__next__() # Since we don't know the type
-                        for chunk in stream:
-                            buf += chunk
-                    except StopIteration as e:
-                        buf = None
-                    except Exception as e:
-                        sys.stderr.write('%s'%(e))
-                    finally:
-                        if selector and buf is not None:
-                            return selector.deserialize(buf)
+        selector = None
+        if metaType == 'json': 
+            selector = self.__jsonSerializer
+        elif metaType == 'pickle':
+            selector = self.__pickleSerializer
+
+        # Guess we've got to load it all into memory
+        try:
+            buf = stream.__next__() # Since we don't know the type
+            for chunk in stream:
+                buf += chunk
+        except StopIteration as e:
+            buf = None
+        except Exception as e:
+            sys.stderr.write('%s'%(e))
+        finally:
+            if selector and buf is not None:
+                return selector.deserialize(buf)
 
     def __manifestPull(self, **identifiers):
         # Returns <errCode>, <data>
         manifest = self.__restDriver.getCloudFilesManifest(**identifiers)
-        status = manifest.get('status_code', 400)
+        status = manifest.get('status_code', httpStatus.BAD_REQUEST)
 
-        if status != 200:
+        if status != httpStatus.OK:
             return status, manifest
-        else:
-            retr = manifest.get('data', None)
-            if retr:
-                headItem = retr[0]
-                return 200, headItem
+        retr = manifest.get('data', None)
+        if retr:
+            headItem = retr[0]
+            return httpStatus.OK, headItem
 
-            return 404, manifest
+        return httpStatus.NOT_FOUND, manifest
 
     def manifestPull(self, **q):
         return self.__manifestPull(**q)

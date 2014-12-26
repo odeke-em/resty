@@ -6,9 +6,18 @@ import sys
 import hmac
 import hashlib
 
-pyVersion = sys.hexversion / (1<<24)
+def pyVersionTuple():
+    version = sys.version_info
 
-if pyVersion >= 3:
+    if hasattr(version, 'major'):
+        return (version.major, version.minor,)
+    if isinstance(version, tuple) and len(version) >= 2:
+       return (version[0], version[1],)
+
+    return (sys.hexversion/(1<<24), 0,)
+
+majorVersion, minorVersion = pyVersionTuple()
+if majorVersion >= 3:
     import urllib.request as urlReqModule
     byteFyer = {'encoding':'utf-8'}
 else:
@@ -18,7 +27,8 @@ else:
 try:
     import requests
 except ImportError:
-    sys.stderr.write("\033[91mFirst install 'requests'\033[00m\n")
+    sys.stderr.write("\033[94mPlease install 'requests' first by: \033[47m`pip{i} "
+        "or pip{i}.{j} requests`\033[00m\n".format(i=majorVersion, j=minorVersion))
     sys.exit(-1)
 
 byteFy = lambda k: bytes(k, **byteFyer)
