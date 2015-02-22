@@ -1,0 +1,3 @@
+fcksum repl.py md5
+list id 1
+exit
