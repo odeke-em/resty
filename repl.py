@@ -18,7 +18,9 @@ translator = dict(
     push        = ['uploadBlob', 'srcPath'],
     putFile     = ['updateFile', 'key', 'attrs'],
     putBlob     = ['updateStream', 'stream'],
+    sign        = ['signItems', '*'],
     trash       = ['deleteBlob', 'attrs'],
+    updateSecretKey = ['updateSecretKey', 'secretKey'],
 )
 
 
